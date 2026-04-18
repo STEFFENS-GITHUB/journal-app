@@ -1,0 +1,8 @@
+pwdlib[argon2]
+sqlalchemy
+asyncmy
+requests
+pytest
+fastapi[all]
+uvicorn
+mysql-connector-python
