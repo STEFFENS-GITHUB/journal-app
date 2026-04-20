@@ -27,7 +27,7 @@ jobs:
       env:
         MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       run: |
-        until docker compose exec -T mysql mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent; do
+        until docker compose exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" &>dev/null; do
           echo "Waiting for MySQL..."
           sleep 2
         done
