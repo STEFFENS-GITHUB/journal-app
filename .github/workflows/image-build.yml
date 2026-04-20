@@ -31,6 +31,8 @@ jobs:
           echo "Waiting for MySQL..."
           sleep 2
         done
+    - name: Run journal app
+      run: python -m app.main
     - name: Run journal-app unit tests
       run: pytest app
 
