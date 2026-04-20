@@ -59,5 +59,5 @@ class LoggingMiddleware(BaseHTTPMiddleware):
             client_ip=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent", None)
         )
-        default_log_handler(log_data)
+        self.log_handler(log_data)
         return response

@@ -35,6 +35,9 @@ def test_delete_journal():
 def test_replace_journal():
     pass
 
+def test_update_journal():
+    pass
+
 def test_get_journal():
     response = client.get("/api/journal/1")
     assert response.status_code == 200
