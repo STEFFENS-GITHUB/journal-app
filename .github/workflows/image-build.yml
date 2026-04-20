@@ -14,7 +14,7 @@ jobs:
       with:
         python-version: "3.12"
     - name: Install app dependancies
-      run: pip install -r requirements.txt
+      run: pip install -r app/requirements.txt
     - name: Run journal-app unit tests
       run: pytest app
 
