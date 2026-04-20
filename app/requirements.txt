@@ -6,3 +6,4 @@ pytest
 fastapi[all]
 uvicorn
 mysql-connector-python
+cryptography
