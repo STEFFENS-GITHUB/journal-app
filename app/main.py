@@ -7,11 +7,14 @@ from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
 import uvicorn
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await create_default_user()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
     yield
 
 app = FastAPI(lifespan=lifespan)

@@ -32,7 +32,7 @@ jobs:
           sleep 2
         done
     - name: Run journal app
-      run: python -m app.main
+      run: python -m app.init_db
     - name: Run journal-app unit tests
       run: pytest app
 
