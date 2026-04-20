@@ -10,7 +10,7 @@ jobs:
     - name: Checkout git repository
       uses: actions/checkout@v4
     - name: Login to Dockerhub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v3
       with:
         username: ${{secrets.DOCKERHUB_USER}}
         password: ${{secrets.DOCKERHUB_PAT}}
