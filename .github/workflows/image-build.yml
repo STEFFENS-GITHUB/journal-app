@@ -20,4 +20,6 @@ jobs:
         context: ./
         file: ./Dockerfile
         push: true
-        tags: steffenp123/journal-app:1.${{ github.run_number }}
+        tags: |
+          steffenp123/journal-app:1.${{ github.run_number }}
+          steffenp123/journal-app:latest
