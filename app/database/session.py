@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.pool import NullPool
 import os
 
 if os.getenv("DOCKER_ENV") == 1:
@@ -8,7 +9,7 @@ else:
 
 if not db_url:
     raise RuntimeError("db_url is not set")
-engine = create_async_engine(db_url, echo=True)
+engine = create_async_engine(db_url, echo=True, poolclass=NullPool)
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
 
 async def get_session():
