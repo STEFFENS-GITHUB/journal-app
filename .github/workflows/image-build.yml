@@ -16,6 +16,12 @@ jobs:
     - name: Install app dependancies
       run: pip install -r app/requirements.txt
     - name: Run docker compose
+      env:
+        MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+        MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+        DEFAULT_APP_PASSWORD: ${{ secrets.DEFAULT_APP_PASSWORD }}
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        DOCKER_ENV: ${{ secrets.DOCKER_ENV }}
       run: docker compose up -d mysql
     - name: Wait for MySQL DB to be ready
       env:
