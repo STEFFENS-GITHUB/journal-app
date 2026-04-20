@@ -33,7 +33,7 @@ jobs:
         done
     - name: Run journal app
       run: python -m app.init_db
-    - name: Run journal-app unit tests
+    - name: Run unit tests
       run: pytest app
 
   build-and-push:
