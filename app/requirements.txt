@@ -3,6 +3,7 @@ sqlalchemy
 asyncmy
 requests
 pytest
+pytest-asyncio
 fastapi[all]
 uvicorn
 mysql-connector-python
