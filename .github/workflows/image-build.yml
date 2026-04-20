@@ -4,7 +4,7 @@ on:
     branches:
     - main
 jobs:
-  unit-testing:
+  testing:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout git repository
@@ -15,10 +15,16 @@ jobs:
         python-version: "3.12"
     - name: Install app dependancies
       run: pip install -r app/requirements.txt
+    - name: Run docker compose
+      run: docker compose up -d mysql
+    - name: Wait for MySQL DB to be ready
+      run: |
+        until nc -z 127.0.0.1 3306; do echo "Waiting..."; sleep 2; done
     - name: Run journal-app unit tests
       run: pytest app
 
   build-and-push:
+    needs: testing
     runs-on: ubuntu-latest
     steps:
     - name: Checkout git repository
