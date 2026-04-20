@@ -18,8 +18,13 @@ jobs:
     - name: Run docker compose
       run: docker compose up -d mysql
     - name: Wait for MySQL DB to be ready
+      env:
+        MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
       run: |
-        until nc -z 127.0.0.1 3306; do echo "Waiting..."; sleep 2; done
+        until docker compose exec -T mysql mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent; do
+          echo "Waiting for MySQL..."
+          sleep 2
+        done
     - name: Run journal-app unit tests
       run: pytest app
 
