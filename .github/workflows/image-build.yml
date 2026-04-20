@@ -4,6 +4,20 @@ on:
     branches:
     - main
 jobs:
+  unit-testing:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout git repository
+      uses: actions/checkout@v4
+    - name: Install python to runner
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+    - name: Install app dependancies
+      run: pip install -r requirements.txt
+    - name: Run journal-app unit tests
+      run: pytest app
+
   build-and-push:
     runs-on: ubuntu-latest
     steps:
