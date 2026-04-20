@@ -3,7 +3,7 @@ volumes:
 
 services:
   mysql:
-    image: mysql
+    image: mysql:latest
     ports:
     - 3306:3306
     volumes: 
@@ -17,7 +17,7 @@ services:
       start_period: 15s
 
   journal-app:
-    image: steffenp123/journal-app
+    image: steffenp123/journal-app:latest
     ports: 
     - 8000:8000
     env_file: .env

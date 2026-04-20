@@ -11,4 +11,4 @@ def test_get_user():
     assert response.status_code == 200
     user = response.json()
     assert user["username"]
-    assert user["password"]
+    assert user["id"]

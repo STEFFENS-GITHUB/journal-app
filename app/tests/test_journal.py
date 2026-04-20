@@ -23,8 +23,8 @@ def test_mock_create_journal():
 def test_create_journal():
     response = client.post("/api/journal/create",
                             json={"title":"Post Test Title", "body":"Post Test Body"}, 
-                            auth=("test_user", "123"))
-    assert response.status_code == 200
+                            auth=("default_user", "123"))
+    assert response.status_code == 201
     journal = response.json()
     assert journal["title"] == "Post Test Title"
     assert journal["body"] == "Post Test Body"
