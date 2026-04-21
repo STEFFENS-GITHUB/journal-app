@@ -7,6 +7,8 @@ from app.models.journal import Journal, JournalIn, JournalOut
 from app.models.user import User, UserIn, UserOut
 import pytest
 
+TEST_AUTH = ("default_user", "123")
+
 @pytest.fixture
 async def client():
     transport = ASGITransport(app=app)
@@ -31,14 +33,14 @@ async def test_mock_create_journal():
 async def create_test_journal(client):
     response = await client.post("/api/journal/create",
                             json={"title":"Post Test Title", "body":"Post Test Body"}, 
-                            auth=("default_user", "123"))
+                            auth=TEST_AUTH)
     assert response.status_code == 201
     journal = response.json()
     yield journal["id"]
 
 
 async def test_delete_journal(client, create_test_journal):
-    response = await client.delete(f"/api/journal/{create_test_journal}", auth=("default_user", "123"))
+    response = await client.delete(f"/api/journal/{create_test_journal}", auth=TEST_AUTH)
     assert response.status_code == 204
 
 async def test_replace_journal(client, create_test_journal):
@@ -53,7 +55,7 @@ async def test_replace_journal(client, create_test_journal):
 async def test_update_journal(client, create_test_journal):
     response = await client.patch(f"/api/journal/{create_test_journal}",
                             json={"body":"Patch Test Body"}, 
-                            auth=("default_user", "123"))
+                            auth=TEST_AUTH)
     assert response.status_code == 200
     journal = response.json()
     assert journal["title"] == "Post Test Title"
@@ -62,14 +64,14 @@ async def test_update_journal(client, create_test_journal):
 
     response = await client.patch(f"/api/journal/{create_test_journal}",
                             json={"title":"Patch Test Title"}, 
-                            auth=("default_user", "123"))
+                            auth=TEST_AUTH)
     assert response.status_code == 200
     journal = response.json()
     assert journal["title"] == "Patch Test Title"
     assert journal["body"] == "Patch Test Body"
 
 async def test_get_journal(client, create_test_journal):
-    response = await client.get(f"/api/journal/{create_test_journal}", auth=("default_user", "123"))
+    response = await client.get(f"/api/journal/{create_test_journal}", auth=TEST_AUTH)
     assert response.status_code == 200
     journal = response.json()
     assert journal["title"]

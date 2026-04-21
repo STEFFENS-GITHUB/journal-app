@@ -1,6 +1,7 @@
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 import pytest
+TEST_AUTH = ("default_user", "123")
 
 @pytest.fixture
 async def client():
@@ -14,7 +15,7 @@ async def create_test_user(client):
     assert response.status_code == 201
     user = response.json()
     yield user["id"]
-    await client.delete(f"/api/user/{user['id']}", auth=("default_user", "123"))
+    await client.delete(f"/api/user/{user['id']}", auth=TEST_AUTH)
 
 async def test_get_user(client, create_test_user):
     response = await client.get(f"/api/user/{create_test_user}")
