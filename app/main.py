@@ -6,8 +6,20 @@ from app.middleware.logging import LoggingMiddleware
 from fastapi import FastAPI, Request, HTTPException
 from contextlib import asynccontextmanager
 import uvicorn
+import asyncio 
+from sqlalchemy import text
 
 async def init_db():
+    for _ in range (30):
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+                break
+        except Exception:
+            await asyncio.sleep(2)
+    else:
+        raise RuntimeError("DB connection has failed.")
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     await create_default_user()

@@ -23,14 +23,14 @@ jobs:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
         DOCKER_ENV: ${{ secrets.DOCKER_ENV }}
       run: docker compose -f docker-compose.ci.yaml up -d mysql
-    - name: Wait for MySQL DB to be ready
-      env:
-        MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-      run: |
-        until docker compose -f docker-compose.ci.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" &>/dev/null; do
-          echo "Waiting for MySQL..."
-          sleep 2
-        done
+    # - name: Wait for MySQL DB to be ready
+    #   env:
+    #     MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+    #   run: |
+    #     until docker compose -f docker-compose.ci.yaml exec -T mysql mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" &>/dev/null; do
+    #       echo "Waiting for MySQL..."
+    #       sleep 2
+    #     done
     - name: Run journal app
       run: python -m app.init_db
     - name: Run unit tests
