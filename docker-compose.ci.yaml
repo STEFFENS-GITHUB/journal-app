@@ -1,0 +1,31 @@
+volumes:
+  mysql-main:
+
+services:
+  mysql:
+    image: mysql:latest
+    ports:
+    - 3306:3306
+    volumes: 
+    - mysql-main:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  core:
+    image: steffenp123/journal-app:latest
+    ports: 
+    - 8000:8000
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DOCKER_ENV: ${DOCKER_ENV}
+      DEFAULT_APP_PASSWORD: ${DEFAULT_APP_PASSWORD}
+    depends_on: 
+      mysql:
+        condition: service_healthy

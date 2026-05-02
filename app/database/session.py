@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 import os
 
-if os.getenv("DOCKER_ENV") == 1:
+if os.getenv("DOCKER_ENV") == "1":
     db_url = os.getenv("DATABASE_URL")
 else:
     db_url="mysql+asyncmy://root:123@localhost:3306/test"

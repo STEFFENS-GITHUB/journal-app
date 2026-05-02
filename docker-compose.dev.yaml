@@ -18,14 +18,15 @@ services:
       retries: 5
       start_period: 15s
 
-  journal-app:
-    image: steffenp123/journal-app:latest
+  core:
+    build: .
+    volumes:
+    - .:/src
     ports: 
     - 8000:8000
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      DOCKER_ENV: ${DOCKER_ENV}
-      DEFAULT_APP_PASSWORD: ${DEFAULT_APP_PASSWORD}
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+    - .env
     depends_on: 
       mysql:
         condition: service_healthy
