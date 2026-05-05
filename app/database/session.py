@@ -14,7 +14,6 @@ else:
     password = secret_json["password"]
     host = os.getenv("DB_ENDPOINT")
     dbname = os.getenv("DB_NAME")
-    port = os.getenv("DB_PORT", "3306")
 
     if not host or not dbname:
         raise RuntimeError("Missing DB env vars")
