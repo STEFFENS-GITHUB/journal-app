@@ -29,6 +29,8 @@ jobs:
         DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}
     - name: Run unit tests
       run: pytest app
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}
 
   build-and-push:
     needs: testing
