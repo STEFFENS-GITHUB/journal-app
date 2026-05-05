@@ -18,7 +18,7 @@ else:
     if not host or not dbname:
         raise RuntimeError("Missing DB env vars")
     
-    db_url = f"mysql+asyncmy://{username}:{password}@{host}:{port}/{dbname}"
+    db_url = f"mysql+asyncmy://{username}:{password}@{host}/{dbname}"
 
 engine = create_async_engine(db_url, echo=True, poolclass=NullPool)
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
