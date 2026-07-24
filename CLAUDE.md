@@ -1,9 +1,9 @@
 ## Architecture
 
-This repository builds a python FastAPI application into a docker image and pushes it to dockerhub.
-Associated repos: (they likely live one directory up, if not, remote in GitHub)
-journal-worker
-journal-cli
+This is a monorepo for the journal application, containing three services:
+- `api/` — python FastAPI backend, built into a docker image and pushed to dockerhub (CI: .github/workflows/api-image-build.yml)
+- `worker/` — worker service that reads email-verification jobs from an SQS queue (CI: .github/workflows/worker-image-build.yml)
+- `cli/` — click-based command-line client for the API (installable via cli/pyproject.toml)
 
 ## Important Commands
 

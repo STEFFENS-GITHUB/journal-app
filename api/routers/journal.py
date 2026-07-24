@@ -1,7 +1,7 @@
-from app.models.journal import Journal, JournalIn, JournalOut, JournalSummary, JournalUpdate
-from app.models.user import User
-from app.utils.database import get_session
-from app.routers.auth import get_current_user, get_current_user_optional
+from api.models.journal import Journal, JournalIn, JournalOut, JournalSummary, JournalUpdate
+from api.models.user import User
+from api.utils.database import get_session
+from api.routers.auth import get_current_user, get_current_user_optional
 from typing import Annotated
 from fastapi import Depends, HTTPException, APIRouter, status
 from sqlalchemy import select

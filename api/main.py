@@ -1,10 +1,10 @@
-from app.models.base import Base
-from app.routers.auth import create_default_user
-from app.routers import journal, user, auth
-from app.middleware.logging import LoggingMiddleware
-from app.utils.database import create_db_engine
-from app.utils.queue import create_sqs_client
-from app.utils.ratelimit import RateLimiter
+from api.models.base import Base
+from api.routers.auth import create_default_user
+from api.routers import journal, user, auth
+from api.middleware.logging import LoggingMiddleware
+from api.utils.database import create_db_engine
+from api.utils.queue import create_sqs_client
+from api.utils.ratelimit import RateLimiter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
@@ -81,7 +81,7 @@ async def health(request: Request):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.main:app",
+        "api.main:app",
         host="0.0.0.0",
         port=8000
     )

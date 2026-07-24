@@ -3,7 +3,7 @@ import logging
 from fastapi import Request, HTTPException
 from redis.exceptions import RedisError
 
-from app.utils.utils import user_identifier
+from api.utils.utils import user_identifier
 
 RATE_LIMIT_LUA = """
 local current = redis.call('INCR', KEYS[1])

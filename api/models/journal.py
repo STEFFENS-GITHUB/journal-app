@@ -1,7 +1,7 @@
 from sqlalchemy import String, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.base import Base
-from app.models.user import UserOut
+from api.models.base import Base
+from api.models.user import UserOut
 from pydantic import BaseModel, ConfigDict, Field
 
 class JournalIn(BaseModel):

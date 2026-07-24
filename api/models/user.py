@@ -1,6 +1,6 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.base import Base
+from api.models.base import Base
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class UserIn(BaseModel):

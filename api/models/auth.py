@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
-from app.models.base import Base
+from api.models.base import Base
 from pydantic import BaseModel, EmailStr
 
 class RefreshRequest(BaseModel):

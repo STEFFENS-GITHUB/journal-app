@@ -1,5 +1,5 @@
-from app.utils.utils import create_access_token, create_email_verification_token
-from app.tests.integration.conftest import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD
+from api.utils.utils import create_access_token, create_email_verification_token
+from api.tests.integration.conftest import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD
 
 async def test_register(client):
     response = await client.post("/register", json={"username": TEST_USERNAME, "email": TEST_EMAIL, "password": TEST_PASSWORD})

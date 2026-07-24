@@ -4,8 +4,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from typing import Callable
 import uuid, logging, time, sys, asyncio
 
-from app.models.log import RequestLogData
-from app.utils.utils import get_client_ip
+from api.models.log import RequestLogData
+from api.utils.utils import get_client_ip
 
 def default_log_handler(log_data: RequestLogData):
     logger = logging.getLogger("request_logger")

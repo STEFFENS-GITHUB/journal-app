@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "journal-cli"
+version = "0.1.0"
+description = "Command-line client for the journal API."
+requires-python = ">=3.10"
+dependencies = [
+    "click",
+    "requests",
+]
+
+[project.scripts]
+journal = "main:cli"
+
+[tool.setuptools]
+py-modules = ["main", "commands", "auth"]

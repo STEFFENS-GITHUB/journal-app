@@ -10,11 +10,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.utils.database import get_session
-from app.utils.queue import send_email_verification_message
-from app.models.auth import RefreshRequest, RefreshToken, ResendVerificationRequest
-from app.models.user import UserIn, UserOut, User
-from app.utils.utils import (ALGORITHM, create_access_token, create_email_verification_token,
+from api.utils.database import get_session
+from api.utils.queue import send_email_verification_message
+from api.models.auth import RefreshRequest, RefreshToken, ResendVerificationRequest
+from api.models.user import UserIn, UserOut, User
+from api.utils.utils import (ALGORITHM, create_access_token, create_email_verification_token,
                              create_refresh_token, hash_password, hash_refresh_token,
                              refresh_token_expiry, verify_password)
 

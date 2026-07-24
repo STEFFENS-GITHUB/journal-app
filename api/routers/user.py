@@ -1,12 +1,12 @@
-from app.models.journal import Journal, JournalIn, JournalOut
-from app.utils.database import get_session
-from app.models.user import User, UserOut
+from api.models.journal import Journal, JournalIn, JournalOut
+from api.utils.database import get_session
+from api.models.user import User, UserOut
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Annotated
 from fastapi import Depends, HTTPException, APIRouter
-from app.routers.auth import get_current_user
+from api.routers.auth import get_current_user
 
 router = APIRouter(prefix="/api/user")
 

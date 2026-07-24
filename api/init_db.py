@@ -1,6 +1,6 @@
 import asyncio
-from app.utils.database import create_db_engine
-from app.main import init_db, validate_env
+from api.utils.database import create_db_engine
+from api.main import init_db, validate_env
 
 if __name__ == "__main__":
     validate_env()

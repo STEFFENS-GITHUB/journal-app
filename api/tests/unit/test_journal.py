@@ -1,5 +1,5 @@
-from app.routers.journal import create_journal
-from app.models.journal import Journal, JournalIn
+from api.routers.journal import create_journal
+from api.models.journal import Journal, JournalIn
 
 async def test_mock_create_journal(mock_session, mock_user):
     input = JournalIn(title="Post Mock-Test Title", body="Post Mock-Test Body")

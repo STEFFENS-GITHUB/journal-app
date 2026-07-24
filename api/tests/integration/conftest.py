@@ -1,10 +1,11 @@
 import os
 
+import redis.asyncio as redis
 from httpx import AsyncClient, ASGITransport
-from app.main import app
-from app.utils.utils import create_email_verification_token
-from app.utils.database import create_db_engine
-from app.utils.queue import create_sqs_client
+from api.main import app
+from api.utils.utils import create_email_verification_token
+from api.utils.database import create_db_engine
+from api.utils.queue import create_sqs_client
 import pytest
 
 @pytest.fixture
@@ -13,10 +14,12 @@ async def client():
         os.environ["DATABASE_URL"] = os.environ["DATABASE_URL_LOCAL"]
     app.state.engine, app.state.session_factory = create_db_engine()
     app.state.sqs_client = create_sqs_client()
+    app.state.redis_client = redis.from_url(os.getenv("REDIS_URL"), encoding="utf-8", decode_responses=True)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
     await app.state.engine.dispose()
+    await app.state.redis_client.aclose()
 
 TEST_USERNAME = "test_user"
 TEST_EMAIL = "test_user@example.com"
