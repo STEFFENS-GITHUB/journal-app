@@ -12,3 +12,4 @@ cryptography
 pyjwt
 boto3
 redis
+alembic

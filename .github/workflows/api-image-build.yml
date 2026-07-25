@@ -48,7 +48,11 @@ jobs:
       run: pip install -r api/requirements.txt
     - name: Run docker compose
       run: docker compose -f docker-compose.ci.yaml up -d mysql elasticmq redis
-    - name: Initialize journal API database
+    - name: Run database migrations
+      run: alembic -c api/alembic.ini upgrade head
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}
+    - name: Seed journal API default user
       run: python -m api.init_db
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}

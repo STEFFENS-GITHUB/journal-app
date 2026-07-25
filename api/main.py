@@ -1,4 +1,3 @@
-from api.models.base import Base
 from api.routers.auth import create_default_user
 from api.routers import journal, user, auth
 from api.middleware.logging import LoggingMiddleware
@@ -34,8 +33,6 @@ async def init_db(engine, session_factory):
     else:
         raise RuntimeError("DB connection has failed.")
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
     await create_default_user(session_factory)
 
 @asynccontextmanager

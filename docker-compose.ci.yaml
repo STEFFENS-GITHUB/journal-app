@@ -19,9 +19,18 @@ services:
       retries: 5
       start_period: 15s
 
+  migrate:
+    image: steffenp123/journal-api:latest
+    entrypoint: alembic -c /api/alembic.ini upgrade head
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   api:
     image: steffenp123/journal-api:latest
-    ports: 
+    ports:
     - 8000:8000
     environment:
       DATABASE_URL: ${DATABASE_URL}
