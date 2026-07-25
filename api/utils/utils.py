@@ -42,14 +42,3 @@ def get_client_ip(request: Request) -> str | None:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else None
-
-async def user_identifier(request: Request) -> str:
-    auth = request.headers.get("authorization", "")
-    if auth.startswith("Bearer "):
-        try:
-            payload = jwt.decode(auth[7:], os.getenv("JWT_SECRET_KEY"), algorithms=[ALGORITHM])
-            if payload.get("sub") and payload.get("purpose") == "access":
-                return f"user:{payload['sub']}"
-        except jwt.PyJWTError:
-            pass
-    return f"ip:{get_client_ip(request) or 'unknown'}"

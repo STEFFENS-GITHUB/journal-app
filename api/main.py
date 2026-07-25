@@ -4,7 +4,7 @@ from api.routers import journal, user, auth
 from api.middleware.logging import LoggingMiddleware
 from api.utils.database import create_db_engine
 from api.utils.queue import create_sqs_client
-from api.utils.ratelimit import RateLimiter
+from api.utils.rate_limiter import RateLimiter
 from fastapi import FastAPI, Request, HTTPException, Depends
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
