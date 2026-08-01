@@ -10,7 +10,7 @@ def create_db_engine():
         secret = json.loads(os.environ["DB_MASTER_SECRET"])
         db_url = f"mysql+asyncmy://{secret['username']}:{secret['password']}@{os.environ['DB_ENDPOINT']}/{os.environ['DB_NAME']}"
 
-    engine = create_async_engine(db_url, echo=True, poolclass=NullPool)
+    engine = create_async_engine(db_url, poolclass=NullPool)
     factory = async_sessionmaker(bind=engine, expire_on_commit=False)
     return engine, factory
 

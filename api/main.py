@@ -1,4 +1,3 @@
-from api.routers.auth import create_default_user
 from api.routers import journal, user, auth
 from api.middleware.logging import LoggingMiddleware
 from api.utils.database import create_db_engine
@@ -13,7 +12,7 @@ import os
 from sqlalchemy import text
 
 def validate_env():
-    for var in ("JWT_SECRET_KEY", "DEFAULT_USER", "DEFAULT_USER_PASSWORD", "REDIS_URL"):
+    for var in ("JWT_SECRET_KEY", "REDIS_URL"):
         if not os.getenv(var):
             raise RuntimeError(f"Missing {var} env var")
 
@@ -22,7 +21,7 @@ def validate_env():
             if not os.getenv(var):
                 raise RuntimeError(f"Missing {var} env var (required when DATABASE_URL is not set)")
 
-async def init_db(engine, session_factory):
+async def wait_db(engine):
     for _ in range (30):
         try:
             async with engine.connect() as conn:
@@ -33,8 +32,6 @@ async def init_db(engine, session_factory):
     else:
         raise RuntimeError("DB connection has failed.")
 
-    await create_default_user(session_factory)
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     validate_env()
@@ -42,7 +39,7 @@ async def lifespan(app: FastAPI):
     app.state.sqs_client = create_sqs_client()
     app.state.redis_client = redis.from_url(os.getenv("REDIS_URL"), encoding="utf-8", decode_responses=True)
 
-    await init_db(app.state.engine, app.state.session_factory)
+    await wait_db(app.state.engine)
     yield
     await app.state.redis_client.aclose()
 

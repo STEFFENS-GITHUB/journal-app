@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from api.models.base import Base
-from api.models import auth, journal, user  # noqa: F401 - registers tables on Base.metadata
+from api.models import auth, journal, user  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,18 +25,13 @@ if config.config_file_name is not None:
 
 
 def get_url() -> str:
-    # no-op in the container, where there is no .env and real env vars are already set
     load_dotenv(Path(__file__).resolve().parents[2] / ".env")
-    # DATABASE_URL points at the compose hostname, so prefer the localhost variant
-    # when running alembic from a shell (same precedence as tests/integration/conftest.py)
-    url = os.getenv("DATABASE_URL_LOCAL") or os.getenv("DATABASE_URL")
+    url = os.getenv("DATABASE_URL_LOCAL") or os.getenv("DATABASE_URL") # Prefers URL_LOCAL if set, must not be set outside of local env.
     if not url:
         secret = json.loads(os.environ["DB_MASTER_SECRET"])
         url = f"mysql+asyncmy://{secret['username']}:{secret['password']}@{os.environ['DB_ENDPOINT']}/{os.environ['DB_NAME']}"
     return url
 
-
-# doubled so a percent sign in the password is not read as ini interpolation
 config.set_main_option("sqlalchemy.url", get_url().replace("%", "%%"))
 
 target_metadata = Base.metadata
