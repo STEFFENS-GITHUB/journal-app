@@ -129,7 +129,7 @@ async def logout(body: RefreshRequest,
     await session.commit()
 
 async def get_current_user(token: Annotated[str | None, Depends(OAuth2PasswordBearer(tokenUrl="/login", auto_error=False))],
-                            session: Annotated[AsyncSession, Depends(get_session)]):
+                            session: Annotated[AsyncSession, Depends(get_session)]) -> User:
     unauthenticated_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="You are not logged in",
@@ -167,10 +167,10 @@ async def get_current_user(token: Annotated[str | None, Depends(OAuth2PasswordBe
             detail="Your account no longer exists",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return UserOut.model_validate(user)
+    return user
 
 async def get_current_user_optional(token: Annotated[str | None, Depends(OAuth2PasswordBearer(tokenUrl="/login", auto_error=False))],
-                                     session: Annotated[AsyncSession, Depends(get_session)]):
+                                     session: Annotated[AsyncSession, Depends(get_session)]) -> User | None:
     if token is None:
         return None
     return await get_current_user(token, session)
