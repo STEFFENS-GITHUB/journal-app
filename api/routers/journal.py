@@ -62,8 +62,10 @@ async def update_journal(session: Annotated[AsyncSession, Depends(get_session)],
     journal = await session.get(Journal, id)
     _check_journal_access(journal, user)
     new_data = updated_journal.model_dump(exclude_unset=True)
-    for key in new_data:
-        setattr(journal, key, new_data[key])
+    for key, value in new_data.items():
+        if value is None:
+            raise HTTPException(status_code=422, detail=f"{key} must not be null")
+        setattr(journal, key, value)
     await session.commit()
     await session.refresh(journal)
     return journal
