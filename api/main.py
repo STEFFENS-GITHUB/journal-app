@@ -12,7 +12,7 @@ import os
 from sqlalchemy import text
 
 def validate_env():
-    for var in ("JWT_SECRET_KEY", "REDIS_URL"):
+    for var in ("JWT_SECRET_KEY", "REDIS_URL", "EMAIL_VERIFICATION_QUEUE_URL"):
         if not os.getenv(var):
             raise RuntimeError(f"Missing {var} env var")
 
