@@ -27,14 +27,15 @@ async def user_identifier(request: Request) -> str:
     return f"ip:{get_client_ip(request) or 'unknown'}"
 
 class RateLimiter:
-    def __init__(self, times: int, seconds: int, identifier=user_identifier):
+    def __init__(self, times: int, seconds: int, name: str, identifier=user_identifier):
         self.times = times
         self.seconds = seconds
         self.identifier = identifier
+        self.name = name
 
     async def __call__(self, request: Request):
         identifier = await self.identifier(request)
-        key = f"ratelimit:{identifier}:{request.scope['route'].path}"
+        key = f"ratelimit:{self.name}:{identifier}:{request.scope['route'].path}"
         redis = request.app.state.redis_client
         try:
             count = await redis.eval(RATE_LIMIT_LUA, 1, key, self.seconds)

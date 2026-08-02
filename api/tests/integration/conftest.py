@@ -1,6 +1,7 @@
 import os
 
 import redis.asyncio as redis
+from redis import Redis
 from httpx import AsyncClient, ASGITransport
 from api.main import app
 from api.utils.utils import create_email_verification_token
@@ -12,6 +13,8 @@ import pytest
 async def client():
     if os.getenv("DATABASE_URL_LOCAL"):
         os.environ["DATABASE_URL"] = os.environ["DATABASE_URL_LOCAL"]
+    if os.getenv("REDIS_URL_LOCAL"):
+        os.environ["REDIS_URL"] = os.environ["REDIS_URL_LOCAL"]
     app.state.engine, app.state.session_factory = create_db_engine()
     app.state.sqs_client = create_sqs_client()
     app.state.redis_client = redis.from_url(os.getenv("REDIS_URL"), encoding="utf-8", decode_responses=True)
@@ -21,9 +24,17 @@ async def client():
     await app.state.engine.dispose()
     await app.state.redis_client.aclose()
 
+@pytest.fixture(autouse=True)
+def flush_rate_limits():
+    url = os.getenv("REDIS_URL_LOCAL") or os.getenv("REDIS_URL")
+    redis_client = Redis.from_url(url)
+    for key in redis_client.scan_iter("ratelimit:*"):
+        redis_client.delete(key)
+    redis_client.close()
+
 TEST_USERNAME = "test_user"
 TEST_EMAIL = "test_user@example.com"
-TEST_PASSWORD = "123"
+TEST_PASSWORD = "password123!"
 
 @pytest.fixture
 async def create_test_user(client):

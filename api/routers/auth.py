@@ -17,10 +17,12 @@ from api.models.user import UserIn, UserOut, User
 from api.utils.utils import (ALGORITHM, create_access_token, create_email_verification_token,
                              create_refresh_token, hash_password, hash_refresh_token,
                              refresh_token_expiry, verify_password)
+from api.utils.rate_limiter import RateLimiter
 
 router = APIRouter()
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED,
+             dependencies=[Depends(RateLimiter(times=5, seconds=300, name="register"))])
 async def register(newUser: UserIn,
                    request: Request,
                    session: Annotated[AsyncSession, Depends(get_session)]):
@@ -70,7 +72,7 @@ async def resend_verify_email(body: ResendVerificationRequest,
         await send_email_verification_message(request.app.state.sqs_client, user.id, user.email, token)
     return {"detail": "If the email is registered and unverified, a new verification message has been sent"}
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(RateLimiter(times=10, seconds=60, name="login"))])
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
                  session: Annotated[AsyncSession, Depends(get_session)]):
     query = select(User).where(or_(User.username == form_data.username, User.email == form_data.username))

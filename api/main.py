@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
     await app.state.redis_client.aclose()
 
 app = FastAPI(lifespan=lifespan,
-              dependencies=[Depends(RateLimiter(times=100, seconds=60))])
+              dependencies=[Depends(RateLimiter(times=100, seconds=60, name="global"))])
 app.add_middleware(LoggingMiddleware)
 app.include_router(journal.router)
 app.include_router(user.router)
