@@ -172,9 +172,11 @@ def delete(ctx: click.Context, journal_id: int):
 @click.command()
 @click.option("--title", prompt=True, help="Title of the journal entry.")
 @click.option("--body", prompt=True, help="Body of the journal entry.")
+@click.option("--public/--private", "is_public", default=False,
+              help="Publish the entry so anyone can read it.")
 @click.pass_context
-def create(ctx: click.Context, title: str, body: str):
-    res = api_request(ctx, "post", "/api/journal/create", json={"title": title, "body": body})
+def create(ctx: click.Context, title: str, body: str, is_public: bool):
+    res = api_request(ctx, "post", "/api/journal/create", json={"title": title, "body": body, "is_public": is_public})
     data = res.json()
     print(f"Created entry {data['id']}: {data['title']}")
 
@@ -182,14 +184,19 @@ def create(ctx: click.Context, title: str, body: str):
 @click.argument("journal_id", type=int)
 @click.option("--title", prompt=True, help="Title of the journal entry.")
 @click.option("--body", prompt=True, help="Body of the journal entry.")
+@click.option("--public/--private", "is_public", default=None,
+              help="Publish or unpublish the entry (defaults to keeping its current setting).")
 @click.pass_context
 def replace(
     ctx: click.Context,
     journal_id: int,
     title: str,
     body: str,
+    is_public: bool | None,
 ):
-    res = api_request(ctx, "put", f"/api/journal/{journal_id}", json={"title": title, "body": body})
+    if is_public is None:
+        is_public = api_request(ctx, "get", f"/api/journal/{journal_id}").json()["is_public"]
+    res = api_request(ctx, "put", f"/api/journal/{journal_id}", json={"title": title, "body": body, "is_public": is_public})
     data = res.json()
     print(f"Replaced entry {data['id']}: {data['title']}")
 
@@ -209,16 +216,21 @@ def replace(
     show_default=False,
     help="New body of the journal entry (leave blank to keep unchanged).",
 )
+@click.option("--public/--private", "is_public", default=None,
+              help="Publish or unpublish the entry (leave unset to keep unchanged).")
 @click.pass_context
 def update(
     ctx: click.Context,
     journal_id: int,
     title: str | None,
     body: str | None,
+    is_public: bool | None,
 ):
     payload = {k: v for k, v in {"title": title, "body": body}.items() if v}
+    if is_public is not None:
+        payload["is_public"] = is_public
     if not payload:
-        raise click.UsageError("Provide at least one of --title or --body.")
+        raise click.UsageError("Provide at least one of --title, --body, or --public/--private.")
     res = api_request(ctx, "patch", f"/api/journal/{journal_id}", json=payload)
     data = res.json()
     print(f"Updated entry {data['id']}: {data['title']}")
