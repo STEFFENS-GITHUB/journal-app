@@ -14,9 +14,9 @@ from api.utils.database import get_session
 from api.utils.queue import send_email_verification_message
 from api.models.auth import RefreshRequest, RefreshToken, ResendVerificationRequest
 from api.models.user import UserIn, UserOut, User
-from api.utils.utils import (ALGORITHM, create_access_token, create_email_verification_token,
-                             create_refresh_token, hash_password, hash_refresh_token,
-                             refresh_token_expiry, verify_password)
+from api.utils.utils import (ALGORITHM, MAX_PASSWORD_LENGTH, create_access_token,
+                             create_email_verification_token, create_refresh_token, hash_password,
+                             hash_refresh_token, refresh_token_expiry, verify_password)
 from api.utils.rate_limiter import RateLimiter
 
 router = APIRouter()
@@ -75,11 +75,16 @@ async def resend_verify_email(body: ResendVerificationRequest,
 @router.post("/login", dependencies=[Depends(RateLimiter(times=10, seconds=60, name="login"))])
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
                  session: Annotated[AsyncSession, Depends(get_session)]):
+    invalid_credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Username or password is incorrect")
+    # OAuth2PasswordRequestForm does no validation, so the UserIn cap does not apply here.
+    # Reject before argon2 sees the input - hashing cost scales with length.
+    if len(form_data.password) > MAX_PASSWORD_LENGTH:
+        raise invalid_credentials_exception
     query = select(User).where(or_(User.username == form_data.username, User.email == form_data.username))
     result = await session.execute(query)
     user = result.scalars().first()
     if not user or not verify_password(form_data.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Username or password is incorrect")
+        raise invalid_credentials_exception
     if not user.email_verified:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please verify your email before logging in")
     refresh_token = create_refresh_token()

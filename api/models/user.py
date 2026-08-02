@@ -2,11 +2,12 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from api.models.base import Base
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from api.utils.utils import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH
 
 class UserIn(BaseModel):
     username: str = Field(min_length=3, max_length=20, pattern=r"^[a-zA-Z0-9_]+$")
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
 
 class UserOut(BaseModel):
     username: str
