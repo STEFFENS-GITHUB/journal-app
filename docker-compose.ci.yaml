@@ -82,6 +82,7 @@ services:
     environment:
       SQS_ENDPOINT_URL: http://elasticmq:9324
       EMAIL_VERIFICATION_QUEUE_URL: http://elasticmq:9324/000000000000/email-verification
+      VERIFY_API_URL: http://localhost:8000/verify-email
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
       AWS_REGION: us-east-1

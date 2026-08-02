@@ -7,9 +7,6 @@ from datetime import datetime, timezone
 
 import boto3
 
-VERIFY_API_URL = os.getenv("VERIFY_API_URL", "http://localhost:8000/verify-email")
-QUEUE_URL = os.environ["EMAIL_VERIFICATION_QUEUE_URL"]
-
 logger = logging.getLogger("worker")
 logger.setLevel(logging.INFO)
 logger.propagate = False
@@ -30,7 +27,16 @@ def log(level: str, event: str, **fields):
     )
 
 
+def validate_env():
+    for var in ("EMAIL_VERIFICATION_QUEUE_URL", "VERIFY_API_URL"):
+        if not os.getenv(var):
+            raise RuntimeError(f"Missing {var} env var")
+
+
 def main():
+    validate_env()
+    queue_url = os.environ["EMAIL_VERIFICATION_QUEUE_URL"]
+    verify_api_url = os.environ["VERIFY_API_URL"]
     sqs_client = boto3.client(
         "sqs",
         endpoint_url=os.getenv("SQS_ENDPOINT_URL") or None,
@@ -38,7 +44,7 @@ def main():
     )
     while True:
         try:
-            result = sqs_client.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=10, WaitTimeSeconds=20)
+            result = sqs_client.receive_message(QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=20)
             for message in result.get("Messages", []):
                 body = json.loads(message["Body"])
                 token = body["token"]
@@ -47,8 +53,8 @@ def main():
                     message_id=message["MessageId"],
                     user_id=body.get("user_id"),
                     request_id=body.get("request_id"),
-                    verify_url=f"{VERIFY_API_URL}?token={token}")
-                sqs_client.delete_message(QueueUrl=QUEUE_URL, ReceiptHandle=message["ReceiptHandle"])
+                    verify_url=f"{verify_api_url}?token={token}")
+                sqs_client.delete_message(QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"])
         except Exception as e:
             log("ERROR", "worker_error", error=repr(e))
             time.sleep(5)
