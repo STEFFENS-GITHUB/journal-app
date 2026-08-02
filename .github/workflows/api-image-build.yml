@@ -47,7 +47,7 @@ jobs:
     - name: Install app dependancies
       run: pip install -r api/requirements.txt
     - name: Run docker compose
-      run: docker compose -f docker-compose.ci.yaml up -d mysql elasticmq redis
+      run: docker compose -f docker-compose.ci.yaml up -d --wait mysql elasticmq redis
     - name: Run database migrations
       run: alembic -c api/alembic.ini upgrade head
       env:
