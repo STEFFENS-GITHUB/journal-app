@@ -121,22 +121,44 @@ def logout(ctx: click.Context):
 @click.command()
 @click.pass_context
 def list(ctx: click.Context):
-    res = api_request(ctx, "get", "/api/journal")
-    for entry in res.json():
-        print(f"{entry['id']}: {entry['title']}")
+    after_id = 0
+    while True:
+        res = api_request(ctx, "get", "/api/journal", params={"after_id": after_id})
+        try:
+            page_size = int(res.headers["X-Page-Size"])
+        except (KeyError, ValueError):
+            raise click.ClickException("API did not return a valid X-Page-Size header.")
+        entries = res.json()
+        if not entries:
+            if after_id == 0:
+                print("No entries found.")
+            break
+        for entry in entries:
+            print(f"{entry['id']}: {entry['title']}")
+        after_id = entries[-1]["id"]
+        if len(entries) < page_size:
+            break
+        print("Show next page? [Y/n] ", end="", flush=True)
+        key = click.getchar()
+        print(key)
+        if key.lower() == "n":
+            break
 
 @click.command()
 @click.pass_context
 def index(ctx: click.Context):
     url = f"{ctx.obj['api_url']}/api/journal/index"
     after_id = 0
-    page_size = 50
     while True:
         try:
             res = requests.get(url, params={"after_id": after_id}, timeout=5)
             res.raise_for_status()
         except requests.RequestException as e:
             raise api_error(e)
+        try:
+            page_size = int(res.headers["X-Page-Size"])
+        except (KeyError, ValueError):
+            raise click.ClickException("API did not return a valid X-Page-Size header.")
         entries = res.json()
         if not entries:
             if after_id == 0:

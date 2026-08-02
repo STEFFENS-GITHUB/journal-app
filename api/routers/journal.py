@@ -3,11 +3,12 @@ from api.models.user import User
 from api.utils.database import get_session
 from api.routers.auth import get_current_user, get_current_user_optional
 from typing import Annotated
-from fastapi import Depends, HTTPException, APIRouter, status
+from fastapi import Depends, HTTPException, APIRouter, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/api/journal")
+PAGE_SIZE = 50
 
 def _check_journal_access(journal: Journal | None, user: User | None, allow_public: bool = False) -> None:
     if not journal:
@@ -73,19 +74,32 @@ async def update_journal(session: Annotated[AsyncSession, Depends(get_session)],
 @router.get('', response_model=list[JournalSummary])
 @router.get('/', response_model=list[JournalSummary])
 async def get_journals(session: Annotated[AsyncSession, Depends(get_session)],
-                  user: Annotated[User, Depends(get_current_user)]):
-    query = select(Journal).where(Journal.user_id == user.id)
+                  user: Annotated[User, Depends(get_current_user)],
+                  response: Response,
+                  after_id: int = 0):
+    response.headers["X-Page-Size"] = str(PAGE_SIZE)
+    query = (
+        select(Journal.id, Journal.title, Journal.is_public)
+        .where(Journal.user_id == user.id, Journal.id > after_id)
+        .order_by(Journal.id)
+        .limit(PAGE_SIZE)
+    )
     result = await session.execute(query)
-    return result.scalars().all()
+    return [
+        JournalSummary(id=id, title=title, is_public=is_public)
+        for id, title, is_public in result.all()
+    ]
 
 @router.get('/index', response_model=list[JournalSummary])
 async def get_journal_index(session: Annotated[AsyncSession, Depends(get_session)],
+                             response: Response,
                              after_id: int = 0):
+    response.headers["X-Page-Size"] = str(PAGE_SIZE)
     query = (
         select(Journal.id, Journal.title, Journal.is_public)
         .where(Journal.id > after_id)
         .order_by(Journal.id)
-        .limit(50)
+        .limit(PAGE_SIZE)
     )
     result = await session.execute(query)
     return [
