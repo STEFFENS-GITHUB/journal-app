@@ -88,7 +88,9 @@ services:
         condition: service_healthy
   
   worker:
-    image: steffenp123/journal-worker:latest
+    build: ./worker
+    volumes:
+    - ./worker:/src
     restart: on-failure:3
     env_file:
     - .env

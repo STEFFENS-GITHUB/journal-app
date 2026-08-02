@@ -13,11 +13,11 @@ def create_sqs_client():
         config=Config(connect_timeout=3, read_timeout=5, retries={"max_attempts": 2}),
     )
 
-async def send_email_verification_message(sqs_client, user_id: int, email: str, token: str) -> None:
+async def send_email_verification_message(sqs_client, user_id: int, email: str, token: str, request_id: str | None = None) -> None:
     queue_url = os.getenv("EMAIL_VERIFICATION_QUEUE_URL")
     if not queue_url:
         return
-    body = json.dumps({"v": 1, "user_id": user_id, "email": email, "token": token})
+    body = json.dumps({"v": 1, "user_id": user_id, "email": email, "token": token, "request_id": request_id})
     try:
         await asyncio.to_thread(sqs_client.send_message, QueueUrl=queue_url, MessageBody=body)
     except Exception:

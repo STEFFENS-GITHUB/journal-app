@@ -35,7 +35,7 @@ async def register(newUser: UserIn,
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username or email already taken")
     await session.refresh(user)
     token = create_email_verification_token(user.id)
-    await send_email_verification_message(request.app.state.sqs_client, user.id, user.email, token)
+    await send_email_verification_message(request.app.state.sqs_client, user.id, user.email, token, request.state.request_id)
     return user
 
 @router.get("/verify-email")
@@ -69,7 +69,7 @@ async def resend_verify_email(body: ResendVerificationRequest,
     user = result.scalars().first()
     if user is not None and not user.email_verified:
         token = create_email_verification_token(user.id)
-        await send_email_verification_message(request.app.state.sqs_client, user.id, user.email, token)
+        await send_email_verification_message(request.app.state.sqs_client, user.id, user.email, token, request.state.request_id)
     return {"detail": "If the email is registered and unverified, a new verification message has been sent"}
 
 @router.post("/login", dependencies=[Depends(RateLimiter(times=10, seconds=60, name="login"))])
