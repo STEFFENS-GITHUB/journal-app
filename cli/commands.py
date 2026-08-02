@@ -4,7 +4,13 @@ import requests
 from auth import clear_tokens, load_tokens, save_tokens
 
 def api_error(e: requests.RequestException) -> click.ClickException:
-    return click.ClickException(e.response.json()["detail"])
+    if e.response is None:
+        return click.ClickException(f"Could not reach the API at {e.request.url}: {e}")
+    try:
+        detail = e.response.json()["detail"]
+    except (ValueError, KeyError, TypeError):
+        detail = f"{e.response.status_code}: {e.response.text[:100]}"
+    return click.ClickException(str(detail))
 
 def api_request(ctx: click.Context, method: str, path: str, **kwargs) -> requests.Response:
     url = f"{ctx.obj['api_url']}{path}"
