@@ -5,7 +5,7 @@ from typing import Annotated
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import or_, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -76,8 +76,6 @@ async def resend_verify_email(body: ResendVerificationRequest,
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
                  session: Annotated[AsyncSession, Depends(get_session)]):
     invalid_credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Username or password is incorrect")
-    # OAuth2PasswordRequestForm does no validation, so the UserIn cap does not apply here.
-    # Reject before argon2 sees the input - hashing cost scales with length.
     if len(form_data.password) > MAX_PASSWORD_LENGTH:
         raise invalid_credentials_exception
     query = select(User).where(or_(User.username == form_data.username, User.email == form_data.username))
@@ -108,10 +106,13 @@ async def refresh(body: RefreshRequest,
         await session.execute(update(RefreshToken).where(RefreshToken.user_id == stored.user_id).values(revoked=True))
         await session.commit()
         raise invalid_token_exception
-    if stored.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if stored.expires_at < now:
         raise invalid_token_exception
 
     stored.revoked = True
+    await session.execute(delete(RefreshToken).where(RefreshToken.user_id == stored.user_id,
+                                                     RefreshToken.expires_at < now))
     refresh_token = create_refresh_token()
     session.add(RefreshToken(user_id=stored.user_id, token_hash=hash_refresh_token(refresh_token), expires_at=refresh_token_expiry()))
     await session.commit()
