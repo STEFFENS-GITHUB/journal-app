@@ -52,7 +52,12 @@ async def verify_email(token: str,
     if payload.get("purpose") != "email-verify" or payload.get("sub") is None:
         raise invalid_token_exception
 
-    user = await session.get(User, int(payload["sub"]))
+    try:
+        user_id = int(payload["sub"])
+    except (ValueError, TypeError):
+        raise invalid_token_exception
+
+    user = await session.get(User, user_id)
     if user is None:
         raise invalid_token_exception
 
@@ -147,6 +152,7 @@ async def get_current_user(token: Annotated[str | None, Depends(OAuth2PasswordBe
                 detail="Invalid authentication token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        user_id = int(user_id)
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -159,8 +165,14 @@ async def get_current_user(token: Annotated[str | None, Depends(OAuth2PasswordBe
             detail="Invalid authentication token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    user = await session.get(User, int(user_id))
+    user = await session.get(User, user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
