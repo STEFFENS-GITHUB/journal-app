@@ -64,7 +64,11 @@ async def health(request: Request):
     except Exception:
         checks["database"] = "unavailable"
     try:
-        await asyncio.to_thread(request.app.state.sqs_client.list_queues, MaxResults=1)
+        await asyncio.to_thread(
+            request.app.state.sqs_client.get_queue_attributes,
+            QueueUrl=os.environ["EMAIL_VERIFICATION_QUEUE_URL"],
+            AttributeNames=["QueueArn"],
+        )
         checks["queue"] = "ok"
     except Exception:
         checks["queue"] = "unavailable"
