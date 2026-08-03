@@ -65,7 +65,8 @@ async def verify_email(token: str,
     await session.commit()
     return {"detail": "Email verified"}
 
-@router.post("/resend-verify-email", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/resend-verify-email", status_code=status.HTTP_202_ACCEPTED,
+             dependencies=[Depends(RateLimiter(times=5, seconds=300, name="resend-verify-email"))])
 async def resend_verify_email(body: ResendVerificationRequest,
                               request: Request,
                               session: Annotated[AsyncSession, Depends(get_session)]):
