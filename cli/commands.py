@@ -118,9 +118,9 @@ def logout(ctx: click.Context):
     clear_tokens()
     print("Logged out.")
 
-@click.command()
+@click.command("list")
 @click.pass_context
-def list(ctx: click.Context):
+def list_journals(ctx: click.Context):
     after_id = 0
     while True:
         res = api_request(ctx, "get", "/api/journal", params={"after_id": after_id})
