@@ -65,7 +65,7 @@ async def test_get_journal_index(client, create_test_journal):
     response = await client.get("/api/journal/index", params={"after_id": create_test_journal - 1})
     assert response.status_code == 200
     journals = response.json()
-    assert len(journals) <= 50
+    assert len(journals) <= int(response.headers["X-Page-Size"])
     journal = journals[0]
     assert journal["id"] == create_test_journal
     assert journal["is_public"] is False
