@@ -1,10 +1,11 @@
 import asyncio
 import json
-import logging
 import os
 
 import boto3
 from botocore.config import Config
+
+from api.utils.logging import log_event
 
 def create_sqs_client():
     return boto3.client(
@@ -21,4 +22,5 @@ async def send_email_verification_message(sqs_client, user_id: int, email: str, 
         await asyncio.to_thread(sqs_client.send_message, QueueUrl=queue_url, MessageBody=body)
     except Exception as e:
         # Registration must not fail because the queue is unavailable.
-        logging.error("email verification enqueue failed: user_id=%s request_id=%s error=%r", user_id, request_id, e)
+        log_event("ERROR", "email_verification_enqueue_failed",
+                  user_id=user_id, request_id=request_id, error=str(e))

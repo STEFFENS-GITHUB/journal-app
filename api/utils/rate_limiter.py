@@ -1,10 +1,10 @@
-import logging
 import os
 
 import jwt
 from fastapi import Request, HTTPException
 from redis.exceptions import RedisError
 
+from api.utils.logging import log_event
 from api.utils.utils import ALGORITHM, get_client_ip
 
 RATE_LIMIT_LUA = """
@@ -39,8 +39,8 @@ class RateLimiter:
         redis = request.app.state.redis_client
         try:
             count = await redis.eval(RATE_LIMIT_LUA, 1, key, self.seconds)
-        except RedisError:
-            logging.warning("rate limit skipped: redis unavailable")
+        except RedisError as e:
+            log_event("WARNING", "rate_limit_skipped", reason="redis unavailable", error=str(e))
             return
         if count > self.times:
             raise HTTPException(429, "Too Many Requests",
