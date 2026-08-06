@@ -15,7 +15,8 @@ def api_error(e: requests.RequestException) -> click.ClickException:
 def api_request(ctx: click.Context, method: str, path: str, **kwargs) -> requests.Response:
     url = f"{ctx.obj['api_url']}{path}"
     tokens = load_tokens()
-    headers = {"Authorization": f"Bearer {tokens.get('access_token', '')}"}
+    access_token = tokens.get("access_token")
+    headers = {"Authorization": f"Bearer {access_token}"} if access_token else {}
     try:
         res = requests.request(method, url, headers=headers, timeout=5, **kwargs)
         if res.status_code == 401 and tokens.get("refresh_token"):
