@@ -1,14 +1,13 @@
 pwdlib[argon2]==0.3.0
 sqlalchemy==2.0.51
 asyncmy==0.2.11
-requests==2.34.2
 pytest==9.1.1
 pytest-asyncio==1.4.0
 pytest-dotenv==0.5.2
 fastapi[all]==0.140.0
 uvicorn==0.51.0
-mysql-connector-python==9.7.0
-cryptography==49.0.0
+httpx==0.28.1
+python-dotenv==1.2.2
 pyjwt==2.13.0
 boto3==1.43.56
 redis==8.0.1
