@@ -64,8 +64,9 @@ async def health(request: Request):
     except Exception:
         checks["database"] = "unavailable"
     try:
+        sqs_client = create_sqs_client(connect_timeout=1, read_timeout=1, max_attempts=0)
         await asyncio.to_thread(
-            request.app.state.sqs_client.get_queue_attributes,
+            sqs_client.get_queue_attributes,
             QueueUrl=os.environ["EMAIL_VERIFICATION_QUEUE_URL"],
             AttributeNames=["QueueArn"],
         )
