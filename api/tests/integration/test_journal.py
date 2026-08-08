@@ -51,6 +51,13 @@ async def test_update_journal(client, auth_headers, create_test_journal):
     assert journal["title"] == "Patch Test Title"
     assert journal["body"] == "Patch Test Body"
 
+async def test_update_journal_rejects_null(client, auth_headers, create_test_journal):
+    response = await client.patch(f"/api/journal/{create_test_journal}",
+                            json={"title":None},
+                            headers=auth_headers)
+    assert response.status_code == 422
+    assert response.json()["detail"] == "title must not be null"
+
 async def test_get_journals(client, auth_headers, create_test_journal):
     response = await client.get("/api/journal", headers=auth_headers)
     assert response.status_code == 200
@@ -60,6 +67,21 @@ async def test_get_journals(client, auth_headers, create_test_journal):
 async def test_get_journals_requires_auth(client):
     response = await client.get("/api/journal")
     assert response.status_code == 401
+
+async def test_get_public_journal_without_auth(client, auth_headers):
+    response = await client.post("/api/journal/create",
+                            json={"title":"Public Test Title", "body":"Public Test Body", "is_public":True},
+                            headers=auth_headers)
+    assert response.status_code == 201
+    journal_id = response.json()["id"]
+    try:
+        response = await client.get(f"/api/journal/{journal_id}")
+        assert response.status_code == 200
+        journal = response.json()
+        assert journal["title"] == "Public Test Title"
+        assert journal["body"] == "Public Test Body"
+    finally:
+        await client.delete(f"/api/journal/{journal_id}", headers=auth_headers)
 
 async def test_get_journal_index(client, create_test_journal):
     response = await client.get("/api/journal/index", params={"after_id": create_test_journal - 1})

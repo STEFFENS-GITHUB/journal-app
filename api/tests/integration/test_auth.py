@@ -1,5 +1,7 @@
+from datetime import timedelta
+
 from api.utils.utils import create_access_token, create_email_verification_token
-from api.tests.integration.conftest import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD, delete_test_user
+from api.tests.integration.conftest import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD, delete_test_user, seed_refresh_token
 
 async def test_register(client):
     response = await client.post("/register", json={"username": TEST_USERNAME, "email": TEST_EMAIL, "password": TEST_PASSWORD})
@@ -103,6 +105,23 @@ async def test_refresh_token_rotation(client, create_test_user):
 
 async def test_refresh_token_invalid(client):
     response = await client.post("/refresh-token", json={"refresh_token": "not-a-real-token"})
+    assert response.status_code == 401
+
+async def test_refresh_token_expired(client, create_test_user):
+    user_id, _ = create_test_user
+    expired_token = await seed_refresh_token(user_id, timedelta(hours=-1))
+
+    response = await client.post("/refresh-token", json={"refresh_token": expired_token})
+    assert response.status_code == 401
+
+async def test_access_token_malformed_sub(client):
+    token = create_access_token("abc")
+    response = await client.get("/api/journal", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
+
+async def test_access_token_wrong_purpose(client):
+    token = create_email_verification_token(1)
+    response = await client.get("/api/journal", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401
 
 async def test_logout_revokes_refresh_token(client, create_test_user):

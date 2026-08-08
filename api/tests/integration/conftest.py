@@ -1,11 +1,13 @@
 import os
+from datetime import datetime, timezone
 
 import redis.asyncio as redis
 from redis import Redis
 from httpx import AsyncClient, ASGITransport
 from api.main import app
+from api.models.auth import RefreshToken
 from api.models.user import User
-from api.utils.utils import create_email_verification_token
+from api.utils.utils import create_email_verification_token, create_refresh_token, hash_refresh_token
 from api.utils.database import create_db_engine
 from api.utils.queue import create_sqs_client
 import pytest
@@ -36,6 +38,14 @@ def flush_rate_limits():
 TEST_USERNAME = "test_user"
 TEST_EMAIL = "test_user@example.com"
 TEST_PASSWORD = "password123!"
+
+async def seed_refresh_token(user_id, expires_in):
+    token = create_refresh_token()
+    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + expires_in
+    async with app.state.session_factory() as session:
+        session.add(RefreshToken(user_id=user_id, token_hash=hash_refresh_token(token), expires_at=expires_at))
+        await session.commit()
+    return token
 
 async def delete_test_user(user_id):
     try:
