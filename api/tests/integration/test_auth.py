@@ -1,24 +1,25 @@
 from api.utils.utils import create_access_token, create_email_verification_token
-from api.tests.integration.conftest import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD
+from api.tests.integration.conftest import TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD, delete_test_user
 
 async def test_register(client):
     response = await client.post("/register", json={"username": TEST_USERNAME, "email": TEST_EMAIL, "password": TEST_PASSWORD})
     assert response.status_code == 201
     user = response.json()
-    assert user["username"] == TEST_USERNAME
-    assert "password" not in user and "password_hash" not in user
+    try:
+        assert user["username"] == TEST_USERNAME
+        assert "password" not in user and "password_hash" not in user
 
-    response = await client.post("/login", data={"username": TEST_USERNAME, "password": TEST_PASSWORD})
-    assert response.status_code == 403
+        response = await client.post("/login", data={"username": TEST_USERNAME, "password": TEST_PASSWORD})
+        assert response.status_code == 403
 
-    token = create_email_verification_token(user["id"])
-    response = await client.get(f"/verify-email?token={token}")
-    assert response.status_code == 200
+        token = create_email_verification_token(user["id"])
+        response = await client.get(f"/verify-email?token={token}")
+        assert response.status_code == 200
 
-    response = await client.post("/login", data={"username": TEST_USERNAME, "password": TEST_PASSWORD})
-    assert response.status_code == 200
-    headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
-    await client.delete(f"/api/user/{user['id']}", headers=headers)
+        response = await client.post("/login", data={"username": TEST_USERNAME, "password": TEST_PASSWORD})
+        assert response.status_code == 200
+    finally:
+        await delete_test_user(user["id"])
 
 async def test_verify_email_invalid_token(client):
     response = await client.get("/verify-email?token=not-a-real-token")
@@ -31,16 +32,13 @@ async def test_verify_email_rejects_login_token(client):
     
 async def test_resend_verify_email_unverified_user(client):
     response = await client.post("/register", json={"username": TEST_USERNAME, "email": TEST_EMAIL, "password": TEST_PASSWORD})
+    assert response.status_code == 201, response.text
     user = response.json()
-
-    response = await client.post("/resend-verify-email", json={"email": TEST_EMAIL})
-    assert response.status_code == 202
-
-    token = create_email_verification_token(user["id"])
-    await client.get(f"/verify-email?token={token}")
-    response = await client.post("/login", data={"username": TEST_USERNAME, "password": TEST_PASSWORD})
-    headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
-    await client.delete(f"/api/user/{user['id']}", headers=headers)
+    try:
+        response = await client.post("/resend-verify-email", json={"email": TEST_EMAIL})
+        assert response.status_code == 202
+    finally:
+        await delete_test_user(user["id"])
 
 async def test_resend_verify_email_unknown_email(client):
     response = await client.post("/resend-verify-email", json={"email": "nobody@example.com"})

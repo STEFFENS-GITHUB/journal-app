@@ -4,6 +4,7 @@ import redis.asyncio as redis
 from redis import Redis
 from httpx import AsyncClient, ASGITransport
 from api.main import app
+from api.models.user import User
 from api.utils.utils import create_email_verification_token
 from api.utils.database import create_db_engine
 from api.utils.queue import create_sqs_client
@@ -36,6 +37,16 @@ TEST_USERNAME = "test_user"
 TEST_EMAIL = "test_user@example.com"
 TEST_PASSWORD = "password123!"
 
+async def delete_test_user(user_id):
+    try:
+        async with app.state.session_factory() as session:
+            user = await session.get(User, user_id)
+            if user:
+                await session.delete(user)
+                await session.commit()
+    except Exception as e:
+        print(f"teardown: could not delete user {user_id}: {e}")
+
 @pytest.fixture
 async def create_test_user(client):
     response = await client.post("/register", json={"username": TEST_USERNAME, "email": TEST_EMAIL, "password": TEST_PASSWORD})
@@ -46,7 +57,7 @@ async def create_test_user(client):
     response = await client.post("/login", data={"username": TEST_USERNAME, "password": TEST_PASSWORD})
     headers = {"Authorization": f"Bearer {response.json()['access_token']}"}
     yield user["id"], headers
-    await client.delete(f"/api/user/{user['id']}", headers=headers)
+    await delete_test_user(user["id"])
 
 @pytest.fixture
 async def auth_headers(client):
