@@ -12,3 +12,4 @@ pyjwt==2.13.0
 boto3==1.43.56
 redis==8.0.1
 alembic==1.18.5
+prometheus-client==0.26.0

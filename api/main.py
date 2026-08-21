@@ -1,9 +1,11 @@
 from api.routers import journal, user, auth
 from api.middleware.logging import LoggingMiddleware
+from api.middleware.metrics import MetricsMiddleware
 from api.utils.database import create_db_engine
 from api.utils.queue import create_sqs_client
 from api.utils.rate_limiter import RateLimiter
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
 import uvicorn
@@ -45,7 +47,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan,
               dependencies=[Depends(RateLimiter(times=100, seconds=60, name="global"))])
-app.add_middleware(LoggingMiddleware)
+app.add_middleware(LoggingMiddleware, exclude_paths={"/health", "/metrics"})
+app.add_middleware(MetricsMiddleware)
 app.include_router(journal.router)
 app.include_router(user.router)
 app.include_router(auth.router)
@@ -77,6 +80,10 @@ async def health(request: Request):
     if checks["database"] == "ok":
         return {"status": "healthy", "checks": checks}
     raise HTTPException(status_code=503, detail={"status": "unhealthy", "checks": checks})
+
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 if __name__ == "__main__":
     uvicorn.run(
