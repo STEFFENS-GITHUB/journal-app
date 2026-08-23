@@ -97,3 +97,12 @@ services:
     depends_on:
       elasticmq:
         condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+    - 9090:9090
+    volumes:
+    - ./prometheus.dev.yaml:/etc/prometheus/prometheus.yml
+    depends_on:
+    - api

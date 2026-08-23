@@ -1,7 +1,7 @@
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from api.utils.metrics import http_requests_total
+from api.utils.metrics import journal_requests_total
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -18,8 +18,8 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 path = request.url.path
             else:
                 path = "unmatched"
-            http_requests_total.labels(
+            journal_requests_total.labels(
                 method=request.method,
-                path=path,
+                route=path,
                 status_code=status_code,
             ).inc()
