@@ -2,6 +2,7 @@ from api.routers import journal, user, auth
 from api.middleware.logging import LoggingMiddleware
 from api.middleware.metrics import MetricsMiddleware
 from api.utils.database import create_db_engine
+from api.utils.metrics import journal_dependency_reachable
 from api.utils.queue import create_sqs_client
 from api.utils.rate_limiter import RateLimiter
 from fastapi import FastAPI, Request, HTTPException, Depends, Response
@@ -76,6 +77,9 @@ async def health(request: Request):
         checks["queue"] = "ok"
     except Exception:
         checks["queue"] = "unavailable"
+
+    for dependency, result in checks.items():
+        journal_dependency_reachable.labels(dependency=dependency).set(1 if result == "ok" else 0)
 
     if checks["database"] == "ok":
         return {"status": "healthy", "checks": checks}

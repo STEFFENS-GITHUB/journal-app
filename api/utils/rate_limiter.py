@@ -5,6 +5,7 @@ from fastapi import Request, HTTPException
 from redis.exceptions import RedisError
 
 from api.utils.logging import log_event
+from api.utils.metrics import journal_rate_limit_rejections_total
 from api.utils.utils import ALGORITHM, get_client_ip
 
 RATE_LIMIT_LUA = """
@@ -35,7 +36,8 @@ class RateLimiter:
 
     async def __call__(self, request: Request):
         identifier = await self.identifier(request)
-        key = f"ratelimit:{self.name}:{identifier}:{request.scope['route'].path}"
+        route = request.scope["route"].path
+        key = f"ratelimit:{self.name}:{identifier}:{route}"
         redis = request.app.state.redis_client
         try:
             count = await redis.eval(RATE_LIMIT_LUA, 1, key, self.seconds)
@@ -43,5 +45,6 @@ class RateLimiter:
             log_event("WARNING", "rate_limit_skipped", reason="redis unavailable", error=str(e))
             return
         if count > self.times:
+            journal_rate_limit_rejections_total.labels(limiter=self.name, route=route).inc()
             raise HTTPException(429, "Too Many Requests",
                                 headers={"Retry-After": str(self.seconds)})
