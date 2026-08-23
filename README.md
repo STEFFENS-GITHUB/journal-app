@@ -8,7 +8,7 @@ Three environments are referenced below:
 
 - **Local** — `docker compose -f docker-compose.dev.yaml`, plus host-side `pytest` and `alembic` runs. Values come from the `.env` file at the repo root, loaded by compose `env_file:`, by `pytest.ini` `env_files`, and by `load_dotenv()` in `api/alembic/env.py`.
 - **CI** — the `integration-test` job in `.github/workflows/api-image-build.yml`. Values come from the job's `env:` block and GitHub Actions secrets.
-- **AWS** — the deployed ECS tasks. Values come from the task definition and Secrets Manager.
+- **AWS** — the deployed infra. Comes from Secrets Manager.
 
 Column values: `required` means startup fails without it, `optional` means it has a working default, and `not set` means it must be left unset in that environment.
 
