@@ -1,6 +1,7 @@
 name: journal
 volumes:
   mysql-main:
+  prometheus-data:
 
 services:
   mysql:
@@ -98,11 +99,37 @@ services:
       elasticmq:
         condition: service_healthy
 
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+    - 9121:9121
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  mysqld-exporter:
+    image: prom/mysqld-exporter:latest
+    ports:
+    - 9104:9104
+    command:
+    - --mysqld.address=mysql:3306
+    - --mysqld.username=root
+    environment:
+      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   prometheus:
     image: prom/prometheus:latest
     ports:
     - 9090:9090
     volumes:
-    - ./prometheus.dev.yaml:/etc/prometheus/prometheus.yml
+    - ./prometheus:/etc/prometheus
+    - prometheus-data:/prometheus
     depends_on:
     - api
+    - redis-exporter
+    - mysqld-exporter
