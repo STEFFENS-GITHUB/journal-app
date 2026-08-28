@@ -3,6 +3,7 @@ volumes:
   mysql-main:
   prometheus-data:
   grafana-data:
+  alertmanager-data:
 
 services:
   mysql:
@@ -123,24 +124,33 @@ services:
       mysql:
         condition: service_healthy
 
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+    - 9093:9093
+    volumes:
+    - ./observability/alertmanager:/etc/alertmanager
+    - alertmanager-data:/alertmanager
+
   prometheus:
     image: prom/prometheus:latest
     ports:
     - 9090:9090
     volumes:
-    - ./prometheus:/etc/prometheus
+    - ./observability/prometheus:/etc/prometheus
     - prometheus-data:/prometheus
     depends_on:
     - api
     - redis-exporter
     - mysqld-exporter
+    - alertmanager
 
   grafana:
     image: grafana/grafana:latest
     ports:
     - 3000:3000
     volumes:
-    - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
     - grafana-data:/var/lib/grafana
     depends_on:
     - prometheus

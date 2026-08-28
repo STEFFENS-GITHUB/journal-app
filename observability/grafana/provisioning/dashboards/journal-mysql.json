@@ -1,6 +1,6 @@
 {
-  "uid": "journal-traffic",
-  "title": "Journal Traffic",
+  "uid": "journal-mysql",
+  "title": "Journal MySQL",
   "tags": ["journal"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -13,17 +13,18 @@
   "panels": [
     {
       "type": "timeseries",
-      "title": "Total API Request Rate",
-      "description": "Per-second rate of journal_requests_total.",
+      "title": "MySQL Connections",
+      "description": "mysql_global_status_threads_connected — open client connections to MySQL.",
       "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
       "datasource": { "uid": "prometheus" },
       "targets": [
-        {"refId": "A","expr": "sum(rate(journal_requests_total[$__rate_interval]))","legendFormat": "total"}
+        {"refId": "A","expr": "mysql_global_status_threads_connected","legendFormat": "connected"}
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
+          "unit": "short",
           "min": 0,
+          "decimals": 0,
           "color": { "mode": "palette-classic" },
           "custom": {
             "drawStyle": "line",

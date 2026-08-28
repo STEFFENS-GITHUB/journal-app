@@ -1,0 +1,53 @@
+groups:
+  - name: journal-availability
+    interval: 30s
+    rules:
+      - alert: TargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus target {{ $labels.job }} is down"
+          description: "Scrapes of {{ $labels.job }} at {{ $labels.instance }} have failed for over 2 minutes."
+
+      - alert: MySQLUnreachable
+        expr: mysql_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "mysqld_exporter cannot connect to MySQL"
+          description: "The exporter is being scraped successfully but cannot open a connection to MySQL."
+
+      - alert: RedisUnreachable
+        expr: redis_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "redis_exporter cannot connect to Redis"
+          description: "The exporter is being scraped successfully but cannot open a connection to Redis."
+
+  - name: journal-traffic
+    interval: 30s
+    rules:
+      - alert: HighServerErrorRate
+        expr: |
+          sum(rate(journal_requests_total{status_code=~"5.."}[5m]))
+            / sum(rate(journal_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Over 5% of API requests are returning 5xx"
+          description: "5xx rate has exceeded 5% of total requests for 5 minutes."
+
+      - alert: RateLimitRejectionsSpike
+        expr: sum(rate(journal_rate_limit_rejections_total[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Rate limiter is rejecting more than 1 request/sec"
+          description: "Sustained rejections from limiter(s) for 5 minutes."
