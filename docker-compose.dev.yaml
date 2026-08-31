@@ -4,6 +4,8 @@ volumes:
   prometheus-data:
   grafana-data:
   alertmanager-data:
+  loki-data:
+  alloy-data:
 
 services:
   mysql:
@@ -145,6 +147,28 @@ services:
     - mysqld-exporter
     - alertmanager
 
+  loki:
+    image: grafana/loki:latest
+    ports:
+    - 3100:3100
+    volumes:
+    - ./observability/loki:/etc/loki
+    - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:latest
+    command:
+    - run
+    - /etc/alloy/config.alloy
+    - --storage.path=/var/lib/alloy/data
+    - --server.http.listen-addr=0.0.0.0:12345
+    volumes:
+    - ./observability/alloy:/etc/alloy
+    - alloy-data:/var/lib/alloy/data
+    - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+    - loki
+
   grafana:
     image: grafana/grafana:latest
     ports:
@@ -154,3 +178,4 @@ services:
     - grafana-data:/var/lib/grafana
     depends_on:
     - prometheus
+    - loki

@@ -21,7 +21,7 @@
           "type": "stat",
           "title": "MySQL Reachable",
           "description": "mysql_up — the exporter could open a connection to MySQL.",
-          "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+          "gridPos": { "h": 5, "w": 8, "x": 0, "y": 1 },
           "datasource": { "uid": "prometheus" },
           "targets": [
             { "refId": "A", "expr": "mysql_up","instant": true }
@@ -63,7 +63,7 @@
           "type": "stat",
           "title": "Redis Reachable",
           "description": "redis_up — the exporter could open a connection to Redis.",
-          "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+          "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
           "datasource": { "uid": "prometheus" },
           "targets": [
             {"refId": "A","expr": "redis_up","instant": true}
@@ -105,7 +105,7 @@
           "type": "stat",
           "title": "API Reachable",
           "description": "up{job=\"journal-api\"} — Prometheus successfully scraped the API's /metrics.",
-          "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+          "gridPos": { "h": 5, "w": 8, "x": 16, "y": 1 },
           "datasource": { "uid": "prometheus" },
           "targets": [
             {"refId": "A","expr": "up{job=\"journal-api\"}","instant": true}
@@ -147,7 +147,7 @@
           "type": "stat",
           "title": "Alertmanager Reachable",
           "description": "up{job=\"alertmanager\"} — Prometheus successfully scraped Alertmanager's /metrics.",
-          "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+          "gridPos": { "h": 5, "w": 8, "x": 0, "y": 6 },
           "datasource": { "uid": "prometheus" },
           "targets": [
             {"refId": "A","expr": "up{job=\"alertmanager\"}","instant": true}
@@ -186,15 +186,102 @@
           }
         },
         {
+          "type": "stat",
+          "title": "Loki Reachable",
+          "description": "up{job=\"loki\"} — Prometheus successfully scraped Loki's /metrics.",
+          "gridPos": { "h": 5, "w": 8, "x": 8, "y": 6 },
+          "datasource": { "uid": "prometheus" },
+          "targets": [
+            {"refId": "A","expr": "up{job=\"loki\"}","instant": true}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "DOWN", "index": 1 },
+                    "1": { "text": "UP", "index": 0 }
+                  }
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              },
+              "noValue": "NO DATA"
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "value",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "wideLayout": true
+          }
+        },
+        {
+          "type": "stat",
+          "title": "Alloy Reachable",
+          "description": "up{job=\"alloy\"} — Prometheus successfully scraped Alloy's /metrics.",
+          "gridPos": { "h": 5, "w": 8, "x": 16, "y": 6 },
+          "datasource": { "uid": "prometheus" },
+          "targets": [
+            {"refId": "A","expr": "up{job=\"alloy\"}","instant": true}
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "thresholds" },
+              "mappings": [
+                {
+                  "type": "value",
+                  "options": {
+                    "0": { "text": "DOWN", "index": 1 },
+                    "1": { "text": "UP", "index": 0 }
+                  }
+                }
+              ],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              },
+              "noValue": "NO DATA"
+            },
+            "overrides": []
+          },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+            "colorMode": "background",
+            "graphMode": "none",
+            "textMode": "value",
+            "justifyMode": "auto",
+            "orientation": "auto",
+            "wideLayout": true
+          }
+        },
+        {
           "type": "state-timeline",
           "title": "Reachability History",
           "description": "UP/DOWN over time. Blank means no data was collected at all — Prometheus was not scraping.",
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 11 },
           "datasource": { "uid": "prometheus" },
           "targets": [
             {"refId": "A","expr": "mysql_up","legendFormat": "MySQL"},
             {"refId": "B","expr": "redis_up","legendFormat": "Redis"},
-            {"refId": "C","expr": "up{job=\"journal-api\"}","legendFormat": "API"}
+            {"refId": "C","expr": "up{job=\"journal-api\"}","legendFormat": "API"},
+            {"refId": "D","expr": "up{job=\"alertmanager\"}","legendFormat": "Alertmanager"},
+            {"refId": "E","expr": "up{job=\"loki\"}","legendFormat": "Loki"},
+            {"refId": "F","expr": "up{job=\"alloy\"}","legendFormat": "Alloy"}
           ],
           "fieldConfig": {
             "defaults": {

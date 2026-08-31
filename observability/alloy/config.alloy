@@ -1,0 +1,40 @@
+discovery.docker "containers" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "15s"
+}
+
+// Keep only the journal API container, and shape its labels.
+discovery.relabel "journal_api" {
+	targets = discovery.docker.containers.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/journal-api-1"
+		action        = "keep"
+	}
+
+	// Strip the leading slash from the container name.
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+
+	rule {
+		target_label = "job"
+		replacement  = "journal-api"
+	}
+}
+
+// Read stdout/stderr from the matched containers and forward to Loki.
+loki.source.docker "journal_api" {
+	host       = "unix:///var/run/docker.sock"
+	targets    = discovery.relabel.journal_api.output
+	forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}

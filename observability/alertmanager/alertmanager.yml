@@ -2,11 +2,14 @@ global:
   resolve_timeout: 5m
 
 route:
-  receiver: default
+  receiver: discord
   group_by: ["alertname"]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
 
 receivers:
-  - name: default
+  - name: discord
+    discord_configs:
+      - webhook_url_file: /etc/alertmanager/discord.env
+        send_resolved: true

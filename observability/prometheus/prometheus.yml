@@ -21,37 +21,33 @@ scrape_configs:
     label_limit: 20
     static_configs:
       - targets: ["redis-exporter:9121"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: go_.*
-        action: drop
 
   - job_name: mysql
     sample_limit: 10000
     label_limit: 20
     static_configs:
       - targets: ["mysqld-exporter:9104"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: go_.*
-        action: drop
 
   - job_name: prometheus
     sample_limit: 10000
     label_limit: 20
     static_configs:
       - targets: ["localhost:9090"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: go_.*
-        action: drop
 
   - job_name: alertmanager
     sample_limit: 10000
     label_limit: 20
     static_configs:
       - targets: ["alertmanager:9093"]
-    metric_relabel_configs:
-      - source_labels: [__name__]
-        regex: go_.*
-        action: drop
+
+  - job_name: loki
+    sample_limit: 10000
+    label_limit: 20
+    static_configs:
+      - targets: ["loki:3100"]
+
+  - job_name: alloy
+    sample_limit: 10000
+    label_limit: 20
+    static_configs:
+      - targets: ["alloy:12345"]
