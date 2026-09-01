@@ -143,6 +143,34 @@
         "legend": { "showLegend": true, "displayMode": "table", "placement": "right", "calcs": ["mean", "max"] },
         "tooltip": { "mode": "multi", "sort": "desc" }
       }
+    },
+    {
+      "type": "stat",
+      "title": "Total Log Lines",
+      "description": "sum(count_over_time({job=\"journal-api\"}[$__range])) — total API log lines in the selected time range, from Loki.",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 36 },
+      "datasource": { "uid": "loki" },
+      "targets": [
+        {"refId": "A","expr": "sum(count_over_time({job=\"journal-api\"}[$__range]))","queryType": "instant"}
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "fixed", "fixedColor": "text" },
+          "noValue": "NO DATA"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "wideLayout": true
+      }
     }
   ]
 }
