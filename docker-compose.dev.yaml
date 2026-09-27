@@ -30,7 +30,7 @@ services:
     - 9324:9324
     - 9325:9325
     volumes:
-    - ./elasticmq.conf:/opt/elasticmq.conf
+    - ./infra/elasticmq.conf:/opt/elasticmq.conf
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "9324"]
       interval: 5s
@@ -50,9 +50,9 @@ services:
       start_period: 5s
 
   migrate:
-    build: ./api
+    build: ./services/api
     volumes:
-    - ./api:/api
+    - ./services/api:/api
     entrypoint: alembic -c /api/alembic.ini upgrade head
     environment:
       DATABASE_URL: ${DATABASE_URL}
@@ -61,9 +61,9 @@ services:
         condition: service_healthy
 
   seed:
-    build: ./api
+    build: ./services/api
     volumes:
-    - ./api:/api
+    - ./services/api:/api
     entrypoint: python -m api.init_db
     env_file:
     - .env
@@ -74,9 +74,9 @@ services:
         condition: service_healthy
 
   api:
-    build: ./api
+    build: ./services/api
     volumes:
-    - ./api:/api
+    - ./services/api:/api
     ports:
     - 8000:8000
     entrypoint: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /api
@@ -93,9 +93,9 @@ services:
         condition: service_healthy
   
   worker:
-    build: ./worker
+    build: ./services/worker
     volumes:
-    - ./worker:/src
+    - ./services/worker:/src
     restart: on-failure:3
     env_file:
     - .env
@@ -131,7 +131,7 @@ services:
     ports:
     - 9093:9093
     volumes:
-    - ./observability/alertmanager:/etc/alertmanager
+    - ./infra/observability/alertmanager:/etc/alertmanager
     - alertmanager-data:/alertmanager
 
   prometheus:
@@ -139,7 +139,7 @@ services:
     ports:
     - 9090:9090
     volumes:
-    - ./observability/prometheus:/etc/prometheus
+    - ./infra/observability/prometheus:/etc/prometheus
     - prometheus-data:/prometheus
     depends_on:
     - api
@@ -152,7 +152,7 @@ services:
     ports:
     - 3100:3100
     volumes:
-    - ./observability/loki:/etc/loki
+    - ./infra/observability/loki:/etc/loki
     - loki-data:/loki
 
   alloy:
@@ -163,7 +163,7 @@ services:
     - --storage.path=/var/lib/alloy/data
     - --server.http.listen-addr=0.0.0.0:12345
     volumes:
-    - ./observability/alloy:/etc/alloy
+    - ./infra/observability/alloy:/etc/alloy
     - alloy-data:/var/lib/alloy/data
     - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
@@ -174,7 +174,7 @@ services:
     ports:
     - 3000:3000
     volumes:
-    - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
     - grafana-data:/var/lib/grafana
     depends_on:
     - prometheus

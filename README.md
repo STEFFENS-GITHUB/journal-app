@@ -1,18 +1,18 @@
 # Journal API
 
-A monorepo for a personal journalling service, made up of three parts: `api/`, a FastAPI backend; `worker/`, a service that consumes email-verification jobs from an SQS queue; and `cli/`, a Click-based command-line client. The API and the worker are each built into a Docker image and pushed to Docker Hub by their own GitHub Actions workflow.
+A monorepo for a personal journalling service, made up of three parts: `services/api/`, a FastAPI backend; `services/worker/`, a service that consumes email-verification jobs from an SQS queue; and `cli/`, a Click-based command-line client. The API and the worker are each built into a Docker image and pushed to Docker Hub by their own GitHub Actions workflow.
 
 ## Environment Variables
 
 Three environments are referenced below:
 
-- **Local** — `docker compose -f docker-compose.dev.yaml`, plus host-side `pytest` and `alembic` runs. Values come from the `.env` file at the repo root, loaded by compose `env_file:`, by `pytest.ini` `env_files`, and by `load_dotenv()` in `api/alembic/env.py`.
+- **Local** — `docker compose -f docker-compose.dev.yaml`, plus host-side `pytest` and `alembic` runs. Values come from the `.env` file at the repo root, loaded by compose `env_file:`, by `pytest.ini` `env_files`, and by `load_dotenv()` in `services/api/alembic/env.py`.
 - **CI** — the `integration-test` job in `.github/workflows/api-image-build.yml`. Values come from the job's `env:` block and GitHub Actions secrets.
 - **AWS** — the deployed infra. Comes from Secrets Manager.
 
 Column values: `required` means startup fails without it, `optional` means it has a working default, and `not set` means it must be left unset in that environment.
 
-### API (`api/`)
+### API (`services/api/`)
 
 Covers the FastAPI service, the `python -m api.init_db` seed step, and `alembic upgrade head`.
 
@@ -32,9 +32,9 @@ Covers the FastAPI service, the `python -m api.init_db` seed step, and `alembic 
 | `AWS_ACCESS_KEY_ID`            | required | required | not set  | Any non-empty placeholder. ElasticMQ ignores the value, but boto3 will not sign a request without credentials present. In AWS the task role supplies them. |
 | `AWS_SECRET_ACCESS_KEY`        | required | required | not set  | Same as `AWS_ACCESS_KEY_ID`. |
 
-`validate_env()` in `api/main.py` enforces `JWT_SECRET_KEY`, `REDIS_URL`, `EMAIL_VERIFICATION_QUEUE_URL`, and the database variables at startup. `api/init_db.py` additionally enforces the `DEFAULT_USER` pair.
+`validate_env()` in `services/api/main.py` enforces `JWT_SECRET_KEY`, `REDIS_URL`, `EMAIL_VERIFICATION_QUEUE_URL`, and the database variables at startup. `services/api/init_db.py` additionally enforces the `DEFAULT_USER` pair.
 
-### Worker (`worker/`)
+### Worker (`services/worker/`)
 
 Not exercised in CI: `.github/workflows/worker-image-build.yml` only builds and pushes the image.
 
@@ -55,7 +55,7 @@ These let host-side tooling reach the compose containers over `localhost` while 
 
 | Variable              | Description |
 | --------------------- | ----------- |
-| `DATABASE_URL_LOCAL`  | Same as `DATABASE_URL` but pointed at `localhost`. Preferred over `DATABASE_URL` by `api/alembic/env.py` and by the integration-test fixtures. |
+| `DATABASE_URL_LOCAL`  | Same as `DATABASE_URL` but pointed at `localhost`. Preferred over `DATABASE_URL` by `services/api/alembic/env.py` and by the integration-test fixtures. |
 | `REDIS_URL_LOCAL`     | Same as `REDIS_URL` but pointed at `localhost`. Preferred over `REDIS_URL` by the integration-test fixtures. |
 | `MYSQL_ROOT_PASSWORD` | Root password for the MySQL container, read by the official `mysql` image's init script. Also set in CI for the compose stack. |
 | `MYSQL_DATABASE`      | Database created by the MySQL container on first boot. Also set in CI for the compose stack. |

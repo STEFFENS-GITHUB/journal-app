@@ -4,7 +4,7 @@ on:
     branches:
     - main
     paths:
-    - 'api/**'
+    - 'services/api/**'
     - 'docker-compose.ci.yaml'
     - '.github/workflows/api-image-build.yml'
 jobs:
@@ -18,9 +18,9 @@ jobs:
       with:
         python-version: "3.12"
     - name: Install app dependancies
-      run: pip install -r api/requirements.txt
+      run: pip install -r services/api/requirements.txt
     - name: Run unit tests
-      run: pytest api/tests/unit
+      run: pytest services/api/tests/unit
 
   integration-test:
     runs-on: ubuntu-latest
@@ -45,19 +45,20 @@ jobs:
       with:
         python-version: "3.12"
     - name: Install app dependancies
-      run: pip install -r api/requirements.txt
+      run: pip install -r services/api/requirements.txt
     - name: Run docker compose
       run: docker compose -f docker-compose.ci.yaml up -d --wait mysql elasticmq redis
     - name: Run database migrations
-      run: alembic -c api/alembic.ini upgrade head
+      run: alembic -c services/api/alembic.ini upgrade head
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}
     - name: Seed journal API default user
       run: python -m api.init_db
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}
+        PYTHONPATH: services
     - name: Run integration tests
-      run: pytest api/tests/integration
+      run: pytest services/api/tests/integration
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL_LOCAL }}
 
@@ -75,8 +76,8 @@ jobs:
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v6
       with:
-        context: ./api
-        file: ./api/Dockerfile
+        context: ./services/api
+        file: ./services/api/Dockerfile
         push: true
         tags: |
           steffenp123/journal-api:1.${{ github.run_number }}

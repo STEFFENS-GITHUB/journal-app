@@ -2,9 +2,8 @@ import asyncio
 import json
 import os
 from logging.config import fileConfig
-from pathlib import Path
 
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -25,7 +24,7 @@ if config.config_file_name is not None:
 
 
 def get_url() -> str:
-    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    load_dotenv(find_dotenv())
     url = os.getenv("DATABASE_URL_LOCAL") or os.getenv("DATABASE_URL") # Prefers URL_LOCAL if set, must not be set outside of local env.
     if not url:
         secret = json.loads(os.environ["DB_MASTER_SECRET"])
