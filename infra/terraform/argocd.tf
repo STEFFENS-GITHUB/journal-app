@@ -6,6 +6,40 @@ resource "helm_release" "argocd" {
   namespace        = "argocd"
   create_namespace = true
 
+  values = [yamlencode({
+    configs = {
+      params = {
+        "server.insecure" = true
+      }
+      cm = {
+        url = "https://argocd.${var.env}.${var.domain}"
+      }
+    }
+    server = {
+      ingress = {
+        enabled          = true
+        ingressClassName = "alb"
+        hostname         = "argocd.${var.env}.${var.domain}"
+        annotations = {
+          "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
+          "alb.ingress.kubernetes.io/target-type"      = "ip"
+          "alb.ingress.kubernetes.io/listen-ports"     = jsonencode([{ HTTP = 80 }, { HTTPS = 443 }])
+          "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
+          "alb.ingress.kubernetes.io/healthcheck-path" = "/healthz"
+        }
+      }
+    }
+  })]
+
+  set_wo = [
+    {
+      name  = "configs.secret.argocdServerAdminPassword"
+      value = bcrypt(ephemeral.random_password.argocd_admin.result)
+      type  = "string"
+    }
+  ]
+  set_wo_revision = 1
+
   depends_on = [
     aws_eks_node_group.main,
     aws_eks_addon.coredns,

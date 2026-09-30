@@ -236,8 +236,9 @@ module "external_dns_pod_identity" {
 }
 
 resource "aws_acm_certificate" "env" {
-  domain_name       = "${var.env}.${var.domain}"
-  validation_method = "DNS"
+  domain_name               = "${var.env}.${var.domain}"
+  subject_alternative_names = ["*.${var.env}.${var.domain}"]
+  validation_method         = "DNS"
 
   tags = {
     Environment = var.env
@@ -254,7 +255,7 @@ resource "aws_route53_record" "acm_validation" {
       name   = dvo.resource_record_name
       type   = dvo.resource_record_type
       record = dvo.resource_record_value
-    }
+    } if !startswith(dvo.domain_name, "*.")
   }
 
   zone_id         = data.aws_route53_zone.env.zone_id
