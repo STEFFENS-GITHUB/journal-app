@@ -1,31 +1,8 @@
-# The VPC and subnets are owned by core-infrastructure; look them up by the
-# Name tags its vpc module sets (<env>-vpc, <env>-vpc-public-<az>, <env>-vpc-private-<az>).
-data "aws_vpc" "main" {
-  tags = {
-    Name = "${var.env}-vpc"
-  }
+data "aws_route53_zone" "env" {
+  name         = "${var.env}.${var.domain}"
+  private_zone = false
 }
 
-data "aws_subnets" "public" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
-  }
-
-  filter {
-    name   = "tag:Name"
-    values = ["${var.env}-vpc-public-*"]
-  }
-}
-
-data "aws_subnets" "private" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.main.id]
-  }
-
-  filter {
-    name   = "tag:Name"
-    values = ["${var.env}-vpc-private-*"]
-  }
+data "aws_iam_role" "terraform_ci" {
+  name = var.terraform_role_name
 }

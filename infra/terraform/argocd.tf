@@ -1,0 +1,80 @@
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  version          = "10.9.4"
+  namespace        = "argocd"
+  create_namespace = true
+
+  depends_on = [
+    aws_eks_node_group.main,
+    aws_eks_addon.coredns,
+    aws_eks_access_policy_association.admin,
+    aws_eks_access_policy_association.terraform_ci,
+  ]
+}
+
+resource "helm_release" "root_app" {
+  name       = "root-app"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-apps"
+  version    = "2.0.6"
+  namespace  = helm_release.argocd.namespace
+
+  values = [yamlencode({
+    applications = {
+      root-app = {
+        namespace = helm_release.argocd.namespace
+        project   = "default"
+        source = {
+          repoURL        = "https://github.com/STEFFENS-GITHUB/journal-app.git"
+          targetRevision = "main"
+          path           = "infra/helm/root-app"
+        }
+        destination = {
+          server    = "https://kubernetes.default.svc"
+          namespace = helm_release.argocd.namespace
+        }
+        syncPolicy = {
+          automated = {
+            prune    = true
+            selfHeal = true
+          }
+        }
+      }
+    }
+  })]
+
+  depends_on = [kubernetes_secret_v1.argocd_cluster]
+}
+
+resource "kubernetes_secret_v1" "argocd_cluster" {
+  metadata {
+    name      = "root-app-cluster-config"
+    namespace = helm_release.argocd.namespace
+
+    labels = {
+      "argocd.argoproj.io/secret-type" = "cluster"
+      env                              = var.env
+    }
+
+    annotations = {
+      cluster_name = aws_eks_cluster.main.name
+      region       = "us-east-1"
+      vpc_id       = module.vpc.vpc_id
+      domain       = "${var.env}.${var.domain}"
+      redis_url    = "rediss://${aws_elasticache_serverless_cache.valkey.endpoint[0].address}:${aws_elasticache_serverless_cache.valkey.endpoint[0].port}"
+      queue_url    = aws_sqs_queue.journal_queue.url
+      db_endpoint  = aws_rds_cluster.aurora.endpoint
+      db_name      = aws_rds_cluster.aurora.database_name
+
+      db_secret_arn  = aws_rds_cluster.aurora.master_user_secret[0].secret_arn
+      jwt_secret_arn = aws_secretsmanager_secret.api_jwt_signing_key.arn
+    }
+  }
+
+  data = { # If remote-cluster rather then the one argo lives in, must have credentials here.
+    name   = aws_eks_cluster.main.name
+    server = "https://kubernetes.default.svc"
+  }
+}

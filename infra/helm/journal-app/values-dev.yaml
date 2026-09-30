@@ -1,0 +1,14 @@
+api:
+  image:
+    tag: "1.24"
+
+worker:
+  image:
+    tag: "1.4"
+
+ingress:
+  host: dev.steffenaws.com
+
+config:
+  AWS_REGION: us-east-1
+  VERIFY_API_URL: https://dev.steffenaws.com/verify-email

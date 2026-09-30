@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: journal-app-config
+data:
+  AWS_REGION: {{ .Values.config.AWS_REGION | quote }}
+  DB_ENDPOINT: {{ .Values.config.DB_ENDPOINT | quote }}
+  DB_NAME: {{ .Values.config.DB_NAME | quote }}
+  REDIS_URL: {{ .Values.config.REDIS_URL | quote }}
+  EMAIL_VERIFICATION_QUEUE_URL: {{ .Values.config.EMAIL_VERIFICATION_QUEUE_URL | quote }}
+  VERIFY_API_URL: {{ .Values.config.VERIFY_API_URL | quote }}

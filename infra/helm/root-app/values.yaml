@@ -1,0 +1,26 @@
+
+awsLoadBalancerController:
+  repoURL: https://aws.github.io/eks-charts
+  chart: aws-load-balancer-controller
+  version: 3.5.0
+
+clusterAutoscaler:
+  repoURL: https://kubernetes.github.io/autoscaler
+  chart: cluster-autoscaler
+  version: 9.59.0
+  imageTag: v1.36.1
+
+externalDns:
+  repoURL: https://kubernetes-sigs.github.io/external-dns
+  chart: external-dns
+  version: 1.22.0
+
+externalSecrets:
+  repoURL: https://charts.external-secrets.io
+  chart: external-secrets
+  version: 2.11.0
+
+journalApp:
+  repoURL: https://github.com/STEFFENS-GITHUB/journal-app.git
+  targetRevision: main
+  path: infra/helm/journal-app
