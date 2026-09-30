@@ -1,10 +1,10 @@
 api:
   image:
-    tag: "1.24"
+    tag: latest
 
 worker:
   image:
-    tag: "1.4"
+    tag: latest
 
 ingress:
   host: dev.steffenaws.com

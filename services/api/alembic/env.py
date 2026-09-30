@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import ssl
 from logging.config import fileConfig
 
 from dotenv import find_dotenv, load_dotenv
@@ -30,6 +31,11 @@ def get_url() -> str:
         secret = json.loads(os.environ["DB_MASTER_SECRET"])
         url = f"mysql+asyncmy://{secret['username']}:{secret['password']}@{os.environ['DB_ENDPOINT']}/{os.environ['DB_NAME']}"
     return url
+
+def get_connect_args() -> dict:
+    if os.getenv("DATABASE_URL_LOCAL") or os.getenv("DATABASE_URL"):
+        return {}
+    return {"ssl": ssl.create_default_context(cafile=os.environ["DB_CA_BUNDLE"])}
 
 config.set_main_option("sqlalchemy.url", get_url().replace("%", "%%"))
 
@@ -78,6 +84,7 @@ async def run_async_migrations() -> None:
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=get_connect_args(),
     )
 
     async with connectable.connect() as connection:
