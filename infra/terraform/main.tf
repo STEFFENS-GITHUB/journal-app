@@ -23,16 +23,36 @@ resource "aws_eks_cluster" "main" {
   depends_on = [aws_iam_role_policy_attachment.eks_cluster]
 }
 
-resource "aws_eks_node_group" "main" {
+locals {
+  control_node_selector = {
+    "node-role" = "control"
+  }
+  control_tolerations = [
+    {
+      key      = "CriticalAddonsOnly"
+      operator = "Exists"
+    }
+  ]
+}
+
+resource "aws_eks_node_group" "control" {
   cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "${var.env}-journal-nodegroup"
+  node_group_name = "${var.env}-journal-control"
   node_role_arn   = aws_iam_role.eks_node.arn
   subnet_ids      = module.vpc.private_subnets
 
   scaling_config {
-    desired_size = 1
-    min_size     = 1
-    max_size     = 3
+    desired_size = 2
+    min_size     = 2
+    max_size     = 2
+  }
+
+  labels = local.control_node_selector
+
+  taint {
+    key    = "CriticalAddonsOnly"
+    value  = "true"
+    effect = "NO_SCHEDULE"
   }
 
   tags = {
@@ -189,21 +209,48 @@ module "lb_controller_pod_identity" {
   }
 }
 
-module "cluster_autoscaler_pod_identity" {
+module "karpenter" {
+  source  = "terraform-aws-modules/eks/aws//modules/karpenter"
+  version = "21.26.0"
+
+  cluster_name = aws_eks_cluster.main.name
+
+  iam_role_name            = "${var.env}-journal-karpenter-role"
+  iam_role_use_name_prefix = false
+
+  node_iam_role_name            = "${var.env}-journal-karpenter-node-role"
+  node_iam_role_use_name_prefix = false
+  node_iam_role_additional_policies = {
+    ssm = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  }
+
+  create_access_entry = true
+
+  tags = {
+    Environment = var.env
+  }
+}
+
+module "keda_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.9.0"
 
-  name            = "${var.env}-journal-cluster-autoscaler-role"
+  name            = "${var.env}-journal-keda-role"
   use_name_prefix = false
 
-  attach_cluster_autoscaler_policy = true
-  cluster_autoscaler_cluster_names = [aws_eks_cluster.main.name]
+  attach_custom_policy = true
+  policy_statements = [
+    {
+      actions   = ["sqs:GetQueueAttributes"]
+      resources = [aws_sqs_queue.journal_queue.arn]
+    }
+  ]
 
   associations = {
-    cluster_autoscaler = {
+    keda = {
       cluster_name    = aws_eks_cluster.main.name
-      namespace       = "kube-system"
-      service_account = "cluster-autoscaler"
+      namespace       = "keda"
+      service_account = "keda-operator"
     }
   }
 

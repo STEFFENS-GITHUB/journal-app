@@ -2,7 +2,6 @@ api:
   image:
     repository: steffenp123/journal-api
     tag: latest
-  replicas: 2
   port: 8000
   serviceAccountName: api
   resources:
@@ -11,12 +10,15 @@ api:
       memory: 256Mi
     limits:
       memory: 512Mi
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
 
 worker:
   image:
     repository: steffenp123/journal-worker
     tag: latest
-  replicas: 1
   serviceAccountName: worker
   resources:
     requests:
@@ -24,6 +26,10 @@ worker:
       memory: 128Mi
     limits:
       memory: 256Mi
+  autoscaling:
+    minReplicaCount: 0
+    maxReplicaCount: 5
+    queueLength: 5
 
 ingress:
   host: ""

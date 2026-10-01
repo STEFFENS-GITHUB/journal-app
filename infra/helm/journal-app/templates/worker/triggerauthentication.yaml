@@ -1,0 +1,10 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: worker-sqs
+  labels:
+    app: worker
+spec:
+  podIdentity:
+    provider: aws
+    identityOwner: keda

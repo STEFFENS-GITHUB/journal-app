@@ -1,25 +1,25 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: api
+  name: api-migrate
   labels:
-    app: api
+    app: api-migrate
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
-  selector:
-    matchLabels:
-      app: api
+  backoffLimit: 3
   template:
     metadata:
       labels:
-        app: api
+        app: api-migrate
     spec:
-      serviceAccountName: {{ .Values.api.serviceAccountName }}
+      restartPolicy: Never
       containers:
-        - name: api
+        - name: migrate
           image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
-          ports:
-            - name: http
-              containerPort: {{ .Values.api.port }}
+          command: ["alembic", "-c", "/api/alembic.ini", "upgrade", "head"]
           envFrom:
             - configMapRef:
                 name: journal-app-config

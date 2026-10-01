@@ -1,0 +1,19 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker
+  labels:
+    app: worker
+spec:
+  scaleTargetRef:
+    name: worker
+  minReplicaCount: {{ .Values.worker.autoscaling.minReplicaCount }}
+  maxReplicaCount: {{ .Values.worker.autoscaling.maxReplicaCount }}
+  triggers:
+    - type: aws-sqs-queue
+      authenticationRef:
+        name: worker-sqs
+      metadata:
+        queueURL: {{ required "config.EMAIL_VERIFICATION_QUEUE_URL is required" .Values.config.EMAIL_VERIFICATION_QUEUE_URL | quote }}
+        awsRegion: {{ required "config.AWS_REGION is required" .Values.config.AWS_REGION | quote }}
+        queueLength: {{ .Values.worker.autoscaling.queueLength | quote }}

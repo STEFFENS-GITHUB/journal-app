@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: external-dns
+  name: karpenter
   namespace: argocd
 spec:
   goTemplate: true
@@ -10,27 +10,21 @@ spec:
     - clusters: {}
   template:
     metadata:
-      name: external-dns
+      name: karpenter
     spec:
       project: default
       source:
-        repoURL: {{ .Values.externalDns.repoURL }}
-        chart: {{ .Values.externalDns.chart }}
-        targetRevision: {{ .Values.externalDns.version }}
+        repoURL: {{ .Values.karpenter.repoURL }}
+        chart: {{ .Values.karpenter.chart }}
+        targetRevision: {{ .Values.karpenter.version }}
         helm:
-          releaseName: external-dns
+          releaseName: karpenter
           valuesObject:
-            provider:
-              name: aws
-            env:
-              - name: AWS_DEFAULT_REGION
-                value: '{{`{{.metadata.annotations.region}}`}}'
-            domainFilters:
-              - '{{`{{.metadata.annotations.domain}}`}}'
-            txtOwnerId: '{{`{{.metadata.annotations.cluster_name}}`}}'
-            policy: sync
+            settings:
+              clusterName: '{{`{{.metadata.annotations.cluster_name}}`}}'
+              interruptionQueue: '{{`{{.metadata.annotations.karpenter_queue}}`}}'
             serviceAccount:
-              name: external-dns
+              name: karpenter
             nodeSelector:
               {{- toYaml .Values.control.nodeSelector | nindent 14 }}
             tolerations:
@@ -42,3 +36,5 @@ spec:
         automated:
           prune: true
           selfHeal: true
+        syncOptions:
+          - ServerSideApply=true

@@ -7,6 +7,10 @@ resource "helm_release" "argocd" {
   create_namespace = true
 
   values = [yamlencode({
+    global = {
+      nodeSelector = local.control_node_selector
+      tolerations  = local.control_tolerations
+    }
     configs = {
       params = {
         "server.insecure" = true
@@ -39,9 +43,10 @@ resource "helm_release" "argocd" {
     }
   ]
   set_wo_revision = 1
+  reuse_values    = true
 
   depends_on = [
-    aws_eks_node_group.main,
+    aws_eks_node_group.control,
     aws_eks_addon.coredns,
     aws_eks_access_policy_association.admin,
     aws_eks_access_policy_association.terraform_ci,
@@ -82,6 +87,21 @@ resource "helm_release" "root_app" {
   depends_on = [kubernetes_secret_v1.argocd_cluster]
 }
 
+resource "terraform_data" "delete_ingresses" {
+  input = aws_eks_cluster.main.name
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      aws eks update-kubeconfig --name ${self.input} --region us-east-1
+      kubectl -n argocd scale statefulset argocd-application-controller --replicas=0
+      kubectl delete ingress --all --all-namespaces --wait --timeout=10m
+    EOT
+  }
+
+  depends_on = [helm_release.root_app]
+}
+
 resource "kubernetes_secret_v1" "argocd_cluster" {
   metadata {
     name      = "root-app-cluster-config"
@@ -101,6 +121,9 @@ resource "kubernetes_secret_v1" "argocd_cluster" {
       queue_url    = aws_sqs_queue.journal_queue.url
       db_endpoint  = aws_rds_cluster.aurora.endpoint
       db_name      = aws_rds_cluster.aurora.database_name
+
+      karpenter_queue = module.karpenter.queue_name
+      node_role       = module.karpenter.node_iam_role_name
 
       db_secret_arn  = aws_rds_cluster.aurora.master_user_secret[0].secret_arn
       jwt_secret_arn = aws_secretsmanager_secret.api_jwt_signing_key.arn

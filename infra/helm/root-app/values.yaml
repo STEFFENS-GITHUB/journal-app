@@ -1,14 +1,30 @@
 
+control:
+  nodeSelector:
+    node-role: control
+  tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+
 awsLoadBalancerController:
   repoURL: https://aws.github.io/eks-charts
   chart: aws-load-balancer-controller
   version: 3.5.0
 
-clusterAutoscaler:
-  repoURL: https://kubernetes.github.io/autoscaler
-  chart: cluster-autoscaler
-  version: 9.59.0
-  imageTag: v1.36.1
+keda:
+  repoURL: https://kedacore.github.io/charts
+  chart: keda
+  version: 2.21.0
+
+karpenter:
+  repoURL: public.ecr.aws/karpenter
+  chart: karpenter
+  version: 1.14.1
+
+karpenterNodePool:
+  repoURL: https://github.com/STEFFENS-GITHUB/journal-app.git
+  targetRevision: main
+  path: infra/helm/karpenter-nodepool
 
 externalDns:
   repoURL: https://kubernetes-sigs.github.io/external-dns

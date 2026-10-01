@@ -5,7 +5,6 @@ metadata:
   labels:
     app: worker
 spec:
-  replicas: {{ .Values.worker.replicas }}
   selector:
     matchLabels:
       app: worker

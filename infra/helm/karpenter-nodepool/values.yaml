@@ -1,0 +1,14 @@
+clusterName: ""
+nodeRole: ""
+
+amiAlias: al2023@latest
+
+capacityTypes:
+  - on-demand
+
+instanceCategories:
+  - c
+  - m
+  - r
+
+cpuLimit: 16
