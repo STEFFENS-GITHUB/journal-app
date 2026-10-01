@@ -217,6 +217,7 @@ module "karpenter" {
 
   iam_role_name            = "${var.env}-journal-karpenter-role"
   iam_role_use_name_prefix = false
+  enable_inline_policy     = true
 
   node_iam_role_name            = "${var.env}-journal-karpenter-node-role"
   node_iam_role_use_name_prefix = false
