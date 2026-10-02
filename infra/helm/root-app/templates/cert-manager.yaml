@@ -25,15 +25,39 @@ spec:
             global:
               nodeSelector:
                 {{- toYaml .Values.control.nodeSelector | nindent 16 }}
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
             tolerations:
               {{- toYaml .Values.control.tolerations | nindent 14 }}
             webhook:
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
               tolerations:
                 {{- toYaml .Values.control.tolerations | nindent 16 }}
             cainjector:
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
               tolerations:
                 {{- toYaml .Values.control.tolerations | nindent 16 }}
             startupapicheck:
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi
               tolerations:
                 {{- toYaml .Values.control.tolerations | nindent 16 }}
       destination:

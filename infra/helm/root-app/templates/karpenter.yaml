@@ -25,6 +25,13 @@ spec:
               interruptionQueue: '{{`{{.metadata.annotations.karpenter_queue}}`}}'
             serviceAccount:
               name: karpenter
+            controller:
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 512Mi
+                limits:
+                  memory: 1Gi
             nodeSelector:
               {{- toYaml .Values.control.nodeSelector | nindent 14 }}
             tolerations:

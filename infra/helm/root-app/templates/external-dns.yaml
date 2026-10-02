@@ -31,6 +31,12 @@ spec:
             policy: sync
             serviceAccount:
               name: external-dns
+            resources:
+              requests:
+                cpu: 10m
+                memory: 64Mi
+              limits:
+                memory: 128Mi
             nodeSelector:
               {{- toYaml .Values.control.nodeSelector | nindent 14 }}
             tolerations:

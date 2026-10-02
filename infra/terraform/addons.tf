@@ -80,6 +80,10 @@ resource "aws_eks_addon" "cloudwatch_observability" {
     manager = {
       nodeSelector = local.control_node_selector
       tolerations  = local.control_tolerations
+      resources = {
+        requests = { cpu = "100m", memory = "64Mi" }
+        limits   = { memory = "256Mi" }
+      }
     }
   })
 

@@ -19,7 +19,53 @@ resource "helm_release" "argocd" {
         url = "https://argocd.${var.env}.${var.domain}"
       }
     }
+    controller = {
+      resources = {
+        requests = { cpu = "100m", memory = "512Mi" }
+        limits   = { memory = "1Gi" }
+      }
+    }
+    repoServer = {
+      resources = {
+        requests = { cpu = "50m", memory = "256Mi" }
+        limits   = { memory = "1Gi" }
+      }
+    }
+    applicationSet = {
+      resources = {
+        requests = { cpu = "25m", memory = "128Mi" }
+        limits   = { memory = "256Mi" }
+      }
+    }
+    redis = {
+      resources = {
+        requests = { cpu = "25m", memory = "64Mi" }
+        limits   = { memory = "256Mi" }
+      }
+    }
+    redisSecretInit = {
+      resources = {
+        requests = { cpu = "10m", memory = "32Mi" }
+        limits   = { memory = "64Mi" }
+      }
+    }
+    dex = {
+      resources = {
+        requests = { cpu = "10m", memory = "64Mi" }
+        limits   = { memory = "128Mi" }
+      }
+    }
+    notifications = {
+      resources = {
+        requests = { cpu = "10m", memory = "64Mi" }
+        limits   = { memory = "128Mi" }
+      }
+    }
     server = {
+      resources = {
+        requests = { cpu = "25m", memory = "128Mi" }
+        limits   = { memory = "256Mi" }
+      }
       ingress = {
         enabled          = true
         ingressClassName = "alb"

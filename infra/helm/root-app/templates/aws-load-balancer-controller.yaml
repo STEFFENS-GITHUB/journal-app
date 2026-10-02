@@ -24,6 +24,12 @@ spec:
             region: '{{`{{.metadata.annotations.region}}`}}'
             vpcId: '{{`{{.metadata.annotations.vpc_id}}`}}'
             enableCertManager: true
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
             nodeSelector:
               {{- toYaml .Values.control.nodeSelector | nindent 14 }}
             tolerations:

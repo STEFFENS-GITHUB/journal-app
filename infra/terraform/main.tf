@@ -62,6 +62,7 @@ resource "aws_eks_node_group" "control" {
   depends_on = [
     aws_iam_role_policy_attachment.eks_node,
     aws_route.private_nat,
+    aws_eks_addon.vpc_cni,
   ]
 }
 
