@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cert-manager
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: cert-manager
+    spec:
+      project: default
+      source:
+        repoURL: {{ .Values.certManager.repoURL }}
+        chart: {{ .Values.certManager.chart }}
+        targetRevision: {{ .Values.certManager.version }}
+        helm:
+          releaseName: cert-manager
+          valuesObject:
+            crds:
+              enabled: true
+            global:
+              nodeSelector:
+                {{- toYaml .Values.control.nodeSelector | nindent 16 }}
+            tolerations:
+              {{- toYaml .Values.control.tolerations | nindent 14 }}
+            webhook:
+              tolerations:
+                {{- toYaml .Values.control.tolerations | nindent 16 }}
+            cainjector:
+              tolerations:
+                {{- toYaml .Values.control.tolerations | nindent 16 }}
+            startupapicheck:
+              tolerations:
+                {{- toYaml .Values.control.tolerations | nindent 16 }}
+      destination:
+        name: '{{`{{.name}}`}}'
+        namespace: cert-manager
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: -1

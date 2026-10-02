@@ -23,6 +23,7 @@ spec:
             clusterName: '{{`{{.metadata.annotations.cluster_name}}`}}'
             region: '{{`{{.metadata.annotations.region}}`}}'
             vpcId: '{{`{{.metadata.annotations.vpc_id}}`}}'
+            enableCertManager: true
             nodeSelector:
               {{- toYaml .Values.control.nodeSelector | nindent 14 }}
             tolerations:

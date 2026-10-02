@@ -11,6 +11,11 @@ awsLoadBalancerController:
   chart: aws-load-balancer-controller
   version: 3.5.0
 
+certManager:
+  repoURL: https://charts.jetstack.io
+  chart: cert-manager
+  version: v1.21.2
+
 keda:
   repoURL: https://kedacore.github.io/charts
   chart: keda
