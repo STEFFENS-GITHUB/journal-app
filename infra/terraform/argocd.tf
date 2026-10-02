@@ -99,7 +99,7 @@ resource "terraform_data" "delete_ingresses" {
     EOT
   }
 
-  depends_on = [helm_release.root_app]
+  depends_on = [helm_release.root_app, module.vpc, aws_route.private_nat]
 }
 
 resource "kubernetes_secret_v1" "argocd_cluster" {
