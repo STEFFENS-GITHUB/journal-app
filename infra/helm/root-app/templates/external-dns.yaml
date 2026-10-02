@@ -28,6 +28,7 @@ spec:
             domainFilters:
               - '{{`{{.metadata.annotations.domain}}`}}'
             txtOwnerId: '{{`{{.metadata.annotations.cluster_name}}`}}'
+            txtPrefix: extdns-%{record_type}.
             policy: sync
             serviceAccount:
               name: external-dns
