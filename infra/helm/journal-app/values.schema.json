@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["ingress", "config", "secrets"],
+  "properties": {
+    "ingress": {
+      "type": "object",
+      "required": ["host"],
+      "properties": {
+        "host": { "type": "string", "minLength": 1 }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": ["AWS_REGION", "DB_ENDPOINT", "DB_NAME", "REDIS_URL", "EMAIL_VERIFICATION_QUEUE_URL"],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "secrets": {
+      "type": "object",
+      "required": ["dbSecretArn", "jwtSecretArn"],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    }
+  }
+}

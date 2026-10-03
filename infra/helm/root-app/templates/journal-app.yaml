@@ -18,10 +18,11 @@ spec:
         targetRevision: {{ .Values.journalApp.targetRevision }}
         path: {{ .Values.journalApp.path }}
         helm:
-          valueFiles:
-            - '{{`values-{{.metadata.labels.env}}.yaml`}}'
           valuesObject:
+            ingress:
+              host: '{{`{{.metadata.annotations.domain}}`}}'
             config:
+              AWS_REGION: '{{`{{.metadata.annotations.region}}`}}'
               REDIS_URL: '{{`{{.metadata.annotations.redis_url}}`}}'
               EMAIL_VERIFICATION_QUEUE_URL: '{{`{{.metadata.annotations.queue_url}}`}}'
               DB_ENDPOINT: '{{`{{.metadata.annotations.db_endpoint}}`}}'

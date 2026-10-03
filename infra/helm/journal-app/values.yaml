@@ -30,18 +30,3 @@ worker:
     minReplicaCount: 0
     maxReplicaCount: 5
     queueLength: 5
-
-ingress:
-  host: ""
-
-config:
-  AWS_REGION: ""
-  DB_ENDPOINT: ""
-  DB_NAME: ""
-  REDIS_URL: ""
-  EMAIL_VERIFICATION_QUEUE_URL: ""
-  VERIFY_API_URL: ""
-
-secrets:
-  dbSecretArn: ""
-  jwtSecretArn: ""
