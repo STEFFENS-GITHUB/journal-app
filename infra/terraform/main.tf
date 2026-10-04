@@ -20,7 +20,10 @@ resource "aws_eks_cluster" "main" {
     Environment = var.env
   }
 
-  depends_on = [aws_iam_role_policy_attachment.eks_cluster]
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_cluster,
+    terraform_data.aws_cleanup,
+  ]
 }
 
 locals {
