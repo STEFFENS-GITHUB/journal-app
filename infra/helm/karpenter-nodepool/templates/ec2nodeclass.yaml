@@ -12,3 +12,5 @@ spec:
   securityGroupSelectorTerms:
     - tags:
         aws:eks:cluster-name: {{ .Values.clusterName }}
+  kubelet:
+    maxPods: 30
