@@ -93,6 +93,9 @@ spec:
               grafana.ini:
                 server:
                   root_url: 'https://grafana.{{`{{.metadata.annotations.domain}}`}}'
+                plugins:
+                  preinstall_disabled: true
+                  disable_plugins: loki,zipkin,mysql,mssql,tempo,stackdriver,opentsdb,elasticsearch,jaeger,influxdb,grafana-pyroscope-datasource,grafana-postgresql-datasource
               ingress:
                 enabled: true
                 ingressClassName: alb
