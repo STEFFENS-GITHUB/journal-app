@@ -1,11 +1,6 @@
 name: journal
 volumes:
   mysql-main:
-  prometheus-data:
-  grafana-data:
-  alertmanager-data:
-  loki-data:
-  alloy-data:
 
 services:
   mysql:
@@ -102,80 +97,3 @@ services:
     depends_on:
       elasticmq:
         condition: service_healthy
-
-  redis-exporter:
-    image: oliver006/redis_exporter:latest
-    ports:
-    - 9121:9121
-    environment:
-      REDIS_ADDR: redis://redis:6379
-    depends_on:
-      redis:
-        condition: service_healthy
-
-  mysqld-exporter:
-    image: prom/mysqld-exporter:latest
-    ports:
-    - 9104:9104
-    command:
-    - --mysqld.address=mysql:3306
-    - --mysqld.username=root
-    environment:
-      MYSQLD_EXPORTER_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-    depends_on:
-      mysql:
-        condition: service_healthy
-
-  alertmanager:
-    image: prom/alertmanager:latest
-    ports:
-    - 9093:9093
-    volumes:
-    - ./infra/observability/alertmanager:/etc/alertmanager
-    - alertmanager-data:/alertmanager
-
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-    - 9090:9090
-    volumes:
-    - ./infra/observability/prometheus:/etc/prometheus
-    - prometheus-data:/prometheus
-    depends_on:
-    - api
-    - redis-exporter
-    - mysqld-exporter
-    - alertmanager
-
-  loki:
-    image: grafana/loki:latest
-    ports:
-    - 3100:3100
-    volumes:
-    - ./infra/observability/loki:/etc/loki
-    - loki-data:/loki
-
-  alloy:
-    image: grafana/alloy:latest
-    command:
-    - run
-    - /etc/alloy/config.alloy
-    - --storage.path=/var/lib/alloy/data
-    - --server.http.listen-addr=0.0.0.0:12345
-    volumes:
-    - ./infra/observability/alloy:/etc/alloy
-    - alloy-data:/var/lib/alloy/data
-    - /var/run/docker.sock:/var/run/docker.sock:ro
-    depends_on:
-    - loki
-
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-    - 3000:3000
-    volumes:
-    - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
-    - grafana-data:/var/lib/grafana
-    depends_on:
-    - prometheus
-    - loki

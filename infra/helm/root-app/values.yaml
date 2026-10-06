@@ -41,6 +41,11 @@ externalSecrets:
   chart: external-secrets
   version: 2.11.0
 
+kubePrometheusStack:
+  repoURL: https://prometheus-community.github.io/helm-charts
+  chart: kube-prometheus-stack
+  version: 92.0.0
+
 journalApp:
   repoURL: https://github.com/STEFFENS-GITHUB/journal-app.git
   targetRevision: main

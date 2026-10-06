@@ -158,6 +158,8 @@ resource "kubernetes_secret_v1" "argocd_cluster" {
 
       db_secret_arn  = aws_rds_cluster.aurora.master_user_secret[0].secret_arn
       jwt_secret_arn = aws_secretsmanager_secret.api_jwt_signing_key.arn
+
+      grafana_secret_arn = aws_secretsmanager_secret.grafana_admin.arn
     }
   }
 

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysqld-exporter
+  labels:
+    app: mysqld-exporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysqld-exporter
+  template:
+    metadata:
+      labels:
+        app: mysqld-exporter
+    spec:
+      containers:
+        - name: mysqld-exporter
+          image: "{{ .Values.mysqldExporter.image.repository }}:{{ .Values.mysqldExporter.image.tag }}"
+          args:
+            - --mysqld.address={{ .Values.config.DB_ENDPOINT }}:3306
+            - --mysqld.username=$(DB_USERNAME)
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: journal-app-secrets
+                  key: DB_USERNAME
+            - name: MYSQLD_EXPORTER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: journal-app-secrets
+                  key: DB_PASSWORD
+          ports:
+            - name: metrics
+              containerPort: 9104
+          resources:
+            requests:
+              cpu: {{ .Values.mysqldExporter.resources.requests.cpu }}
+              memory: {{ .Values.mysqldExporter.resources.requests.memory }}
+            limits:
+              memory: {{ .Values.mysqldExporter.resources.limits.memory }}

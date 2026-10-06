@@ -72,6 +72,49 @@ resource "aws_eks_addon" "metrics_server" {
   depends_on = [aws_eks_node_group.control]
 }
 
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name = aws_eks_cluster.main.name
+  addon_name   = "aws-ebs-csi-driver"
+
+  configuration_values = jsonencode({
+    controller = {
+      nodeSelector = local.control_node_selector
+      tolerations  = local.control_tolerations
+    }
+    node = {
+      tolerateAllTaints = true
+    }
+  })
+
+  tags = {
+    Environment = var.env
+  }
+
+  depends_on = [
+    aws_eks_node_group.control,
+    aws_eks_addon.pod_identity_agent,
+    module.ebs_csi_pod_identity,
+  ]
+}
+
+resource "kubernetes_storage_class_v1" "gp3" {
+  metadata {
+    name = "gp3"
+  }
+
+  storage_provisioner    = "ebs.csi.aws.com"
+  reclaim_policy         = "Delete"
+  volume_binding_mode    = "WaitForFirstConsumer"
+  allow_volume_expansion = true
+
+  parameters = {
+    type      = "gp3"
+    encrypted = "true"
+  }
+
+  depends_on = [aws_eks_addon.ebs_csi_driver]
+}
+
 resource "aws_eks_addon" "cloudwatch_observability" {
   cluster_name = aws_eks_cluster.main.name
   addon_name   = "amazon-cloudwatch-observability"

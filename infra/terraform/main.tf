@@ -103,6 +103,28 @@ module "cloudwatch_pod_identity" {
   }
 }
 
+module "ebs_csi_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "2.9.0"
+
+  name            = "${var.env}-journal-ebs-csi-role"
+  use_name_prefix = false
+
+  attach_aws_ebs_csi_policy = true
+
+  associations = {
+    ebs_csi = {
+      cluster_name    = aws_eks_cluster.main.name
+      namespace       = "kube-system"
+      service_account = "ebs-csi-controller-sa"
+    }
+  }
+
+  tags = {
+    Environment = var.env
+  }
+}
+
 module "api_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "2.9.0"
@@ -145,6 +167,7 @@ module "external_secrets_pod_identity" {
   external_secrets_secrets_manager_arns = [
     aws_rds_cluster.aurora.master_user_secret[0].secret_arn,
     aws_secretsmanager_secret.api_jwt_signing_key.arn,
+    aws_secretsmanager_secret.grafana_admin.arn,
   ]
 
   associations = {

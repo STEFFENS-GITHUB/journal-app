@@ -1,0 +1,155 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: kube-prometheus-stack
+    spec:
+      project: default
+      source:
+        repoURL: {{ .Values.kubePrometheusStack.repoURL }}
+        chart: {{ .Values.kubePrometheusStack.chart }}
+        targetRevision: {{ .Values.kubePrometheusStack.version }}
+        helm:
+          releaseName: kube-prometheus-stack
+          valuesObject:
+            alertmanager:
+              enabled: false
+            kubeControllerManager:
+              enabled: false
+            kubeEtcd:
+              enabled: false
+            kubeScheduler:
+              enabled: false
+            kubeProxy:
+              enabled: false
+            prometheusOperator:
+              admissionWebhooks:
+                certManager:
+                  enabled: true
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              nodeSelector:
+                {{- toYaml .Values.control.nodeSelector | nindent 16 }}
+              tolerations:
+                {{- toYaml .Values.control.tolerations | nindent 16 }}
+            kube-state-metrics:
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 128Mi
+              nodeSelector:
+                {{- toYaml .Values.control.nodeSelector | nindent 16 }}
+              tolerations:
+                {{- toYaml .Values.control.tolerations | nindent 16 }}
+            prometheus-node-exporter:
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 64Mi
+            prometheus:
+              prometheusSpec:
+                retention: 7d
+                retentionSize: 18GB
+                serviceMonitorSelectorNilUsesHelmValues: false
+                podMonitorSelectorNilUsesHelmValues: false
+                ruleSelectorNilUsesHelmValues: false
+                resources:
+                  requests:
+                    cpu: 100m
+                    memory: 512Mi
+                  limits:
+                    memory: 1Gi
+                nodeSelector:
+                  {{- toYaml .Values.control.nodeSelector | nindent 18 }}
+                tolerations:
+                  {{- toYaml .Values.control.tolerations | nindent 18 }}
+                storageSpec:
+                  volumeClaimTemplate:
+                    spec:
+                      storageClassName: gp3
+                      accessModes: ["ReadWriteOnce"]
+                      resources:
+                        requests:
+                          storage: 20Gi
+            grafana:
+              admin:
+                existingSecret: grafana-admin
+              grafana.ini:
+                server:
+                  root_url: 'https://grafana.{{`{{.metadata.annotations.domain}}`}}'
+              ingress:
+                enabled: true
+                ingressClassName: alb
+                annotations:
+                  alb.ingress.kubernetes.io/scheme: internet-facing
+                  alb.ingress.kubernetes.io/target-type: ip
+                  alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+                  alb.ingress.kubernetes.io/ssl-redirect: "443"
+                  alb.ingress.kubernetes.io/healthcheck-path: /api/health
+                hosts:
+                  - 'grafana.{{`{{.metadata.annotations.domain}}`}}'
+                tls:
+                  - hosts:
+                      - 'grafana.{{`{{.metadata.annotations.domain}}`}}'
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 256Mi
+              nodeSelector:
+                {{- toYaml .Values.control.nodeSelector | nindent 16 }}
+              tolerations:
+                {{- toYaml .Values.control.tolerations | nindent 16 }}
+            extraManifests:
+              - apiVersion: external-secrets.io/v1
+                kind: SecretStore
+                metadata:
+                  name: aws-secrets-manager
+                spec:
+                  provider:
+                    aws:
+                      service: SecretsManager
+                      region: '{{`{{.metadata.annotations.region}}`}}'
+              - apiVersion: external-secrets.io/v1
+                kind: ExternalSecret
+                metadata:
+                  name: grafana-admin
+                spec:
+                  refreshInterval: 1h
+                  secretStoreRef:
+                    name: aws-secrets-manager
+                    kind: SecretStore
+                  target:
+                    name: grafana-admin
+                  dataFrom:
+                    - extract:
+                        key: '{{`{{.metadata.annotations.grafana_secret_arn}}`}}'
+      destination:
+        name: '{{`{{.name}}`}}'
+        namespace: monitoring
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+        retry:
+          limit: -1

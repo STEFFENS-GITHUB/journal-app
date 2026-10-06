@@ -8,6 +8,8 @@ resource "terraform_data" "kubernetes_cleanup" {
       aws eks update-kubeconfig --name ${self.input} --region us-east-1
       kubectl -n argocd scale statefulset argocd-application-controller --replicas=0
       kubectl delete ingress --all --all-namespaces --wait --timeout=10m
+      kubectl delete namespace monitoring --ignore-not-found --wait --timeout=10m
+      timeout 600 sh -c 'while kubectl get pv -o name | grep -q .; do sleep 10; done'
       kubectl delete nodepool --all --wait --timeout=10m
       timeout 900 sh -c 'while kubectl get nodeclaims -o name | grep -q .; do sleep 10; done'
     EOT
@@ -25,6 +27,9 @@ resource "terraform_data" "kubernetes_cleanup" {
     module.lb_controller_pod_identity,
     module.external_dns_pod_identity,
     module.karpenter,
+    aws_eks_addon.ebs_csi_driver,
+    module.ebs_csi_pod_identity,
+    kubernetes_storage_class_v1.gp3,
   ]
 }
 
