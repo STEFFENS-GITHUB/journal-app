@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysqld-exporter
+  labels:
+    app: mysqld-exporter
+data:
+  my.cnf: |
+    [client]
+    ssl-ca = /etc/mysqld-exporter/rds-ca-bundle.pem
+  rds-ca-bundle.pem: |
+{{ .Files.Get "files/rds-us-east-1-bundle.pem" | indent 4 }}

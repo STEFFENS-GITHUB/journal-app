@@ -18,6 +18,7 @@ spec:
         - name: mysqld-exporter
           image: "{{ .Values.mysqldExporter.image.repository }}:{{ .Values.mysqldExporter.image.tag }}"
           args:
+            - --config.my-cnf=/etc/mysqld-exporter/my.cnf
             - --mysqld.address={{ .Values.config.DB_ENDPOINT }}:3306
             - --mysqld.username=$(DB_USERNAME)
           env:
@@ -34,9 +35,17 @@ spec:
           ports:
             - name: metrics
               containerPort: 9104
+          volumeMounts:
+            - name: config
+              mountPath: /etc/mysqld-exporter
+              readOnly: true
           resources:
             requests:
               cpu: {{ .Values.mysqldExporter.resources.requests.cpu }}
               memory: {{ .Values.mysqldExporter.resources.requests.memory }}
             limits:
               memory: {{ .Values.mysqldExporter.resources.limits.memory }}
+      volumes:
+        - name: config
+          configMap:
+            name: mysqld-exporter
