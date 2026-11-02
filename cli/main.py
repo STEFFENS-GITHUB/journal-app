@@ -33,7 +33,7 @@ def cli(ctx: click.Context, url: str):
 @cli.command()
 @click.pass_context
 def health(ctx: click.Context):
-    url = f"{ctx.obj['api_url']}/health"
+    url = f"{ctx.obj['api_url']}/ready"
     try:
         res = requests.get(url, timeout=5)
         res.raise_for_status()

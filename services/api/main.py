@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
 global_rate_limit = Depends(RateLimiter(times=100, seconds=60, name="global"))
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(LoggingMiddleware, exclude_paths={"/health", "/metrics"})
+app.add_middleware(LoggingMiddleware, exclude_paths={"/health", "/ready", "/metrics"})
 app.add_middleware(MetricsMiddleware)
 app.include_router(journal.router, dependencies=[global_rate_limit])
 app.include_router(user.router, dependencies=[global_rate_limit])
