@@ -46,20 +46,25 @@ async def lifespan(app: FastAPI):
     yield
     await app.state.redis_client.aclose()
 
-app = FastAPI(lifespan=lifespan,
-              dependencies=[Depends(RateLimiter(times=100, seconds=60, name="global"))])
+global_rate_limit = Depends(RateLimiter(times=100, seconds=60, name="global"))
+
+app = FastAPI(lifespan=lifespan)
 app.add_middleware(LoggingMiddleware, exclude_paths={"/health", "/metrics"})
 app.add_middleware(MetricsMiddleware)
-app.include_router(journal.router)
-app.include_router(user.router)
-app.include_router(auth.router)
+app.include_router(journal.router, dependencies=[global_rate_limit])
+app.include_router(user.router, dependencies=[global_rate_limit])
+app.include_router(auth.router, dependencies=[global_rate_limit])
 
-@app.get('/')
+@app.get('/', dependencies=[global_rate_limit])
 def index():
     return f"Welcome to the page"
 
 @app.get("/health")
-async def health(request: Request):
+async def health():
+    return {"status": "healthy"}
+
+@app.get("/ready")
+async def ready(request: Request):
     checks = {}
     try:
         async with request.app.state.engine.connect() as conn:
@@ -82,8 +87,8 @@ async def health(request: Request):
         journal_dependency_reachable.labels(dependency=dependency).set(1 if result == "ok" else 0)
 
     if checks["database"] == "ok":
-        return {"status": "healthy", "checks": checks}
-    raise HTTPException(status_code=503, detail={"status": "unhealthy", "checks": checks})
+        return {"status": "ready", "checks": checks}
+    raise HTTPException(status_code=503, detail={"status": "not_ready", "checks": checks})
 
 @app.get("/metrics")
 def metrics():
