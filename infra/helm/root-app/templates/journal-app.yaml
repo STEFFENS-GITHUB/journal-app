@@ -19,6 +19,9 @@ spec:
         path: {{ .Values.journalApp.path }}
         helm:
           valuesObject:
+            api:
+              image:
+                tag: "1.29"
             ingress:
               host: '{{`{{.metadata.annotations.domain}}`}}'
             config:
