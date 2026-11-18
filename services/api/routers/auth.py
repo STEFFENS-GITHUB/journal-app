@@ -89,8 +89,9 @@ async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2Pa
     user = result.scalars().first()
     if not user or not verify_password(form_data.password, user.password_hash):
         raise invalid_credentials_exception
-    if not user.email_verified:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please verify your email before logging in")
+    # TEMP: email verification check disabled until the worker sends real emails via SES
+    # if not user.email_verified:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Please verify your email before logging in")
     refresh_token = create_refresh_token()
     session.add(RefreshToken(user_id=user.id, token_hash=hash_refresh_token(refresh_token), expires_at=refresh_token_expiry()))
     await session.commit()

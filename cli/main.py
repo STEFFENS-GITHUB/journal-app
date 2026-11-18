@@ -20,7 +20,7 @@ from commands import (
 @click.version_option()
 @click.option(
     "--url",
-    envvar="URL",
+    envvar="JOURNAL_API_URL",
     default="http://localhost:8000",
     show_default=True,
     help="Base URL of the journal API.",
