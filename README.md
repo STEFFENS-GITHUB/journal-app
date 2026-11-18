@@ -1,61 +1,79 @@
-# Journal API
+# Journal App
 
-A monorepo for a personal journalling service, made up of three parts: `services/api/`, a FastAPI backend; `services/worker/`, a service that consumes email-verification jobs from an SQS queue; and `cli/`, a Click-based command-line client. The API and the worker are each built into a Docker image and pushed to Docker Hub by their own GitHub Actions workflow.
+A monorepo for a personal journalling service.
 
-## Environment Variables
+- `services/api/` is the FastAPI backend.
+- `services/worker/` reads email-verification jobs from an SQS queue.
+- `cli/` is a Click-based command-line client for the API.
+- `infra/terraform/` builds the AWS environment: VPC, EKS, Aurora, Valkey, SQS and ArgoCD.
+- `infra/helm/` holds the charts ArgoCD deploys. `root-app` is the app-of-apps, `journal-app` runs the API and worker, and `karpenter-nodepool` defines the worker nodes.
 
-Three environments are referenced below:
+## Running locally
 
-- **Local** — `docker compose -f docker-compose.dev.yaml`, plus host-side `pytest` and `alembic` runs. Values come from the `.env` file at the repo root, loaded by compose `env_file:`, by `pytest.ini` `env_files`, and by `load_dotenv()` in `services/api/alembic/env.py`.
-- **CI** — the `integration-test` job in `.github/workflows/api-image-build.yml`. Values come from the job's `env:` block and GitHub Actions secrets.
-- **AWS** — the deployed infra. Comes from Secrets Manager.
+Create a `.env` file at the repo root with the local variables listed below, then run:
 
-Column values: `required` means startup fails without it, `optional` means it has a working default, and `not set` means it must be left unset in that environment.
+```
+docker compose up
+```
 
-### API (`services/api/`)
+This starts MySQL, Redis and ElasticMQ, runs the migrations, seeds the default user, then starts the API on port 8000 and the worker.
 
-Covers the FastAPI service, the `python -m api.init_db` seed step, and `alembic upgrade head`.
+The same `compose.yaml` is used by CI, which starts only `mysql`, `elasticmq` and `redis` and runs migrations, seeding and tests on the runner.
 
-| Variable                       | Local    | CI       | AWS      | Description |
-| ------------------------------ | -------- | -------- | -------- | ----------- |
-| `JWT_SECRET_KEY`               | required | required | required | Secret used to sign and verify access, refresh, and email-verification JWTs. |
-| `REDIS_URL`                    | required | required | required | Redis connection string, used by the rate limiter. |
-| `EMAIL_VERIFICATION_QUEUE_URL` | required | required | required | SQS queue URL the API enqueues email-verification jobs to. |
-| `DATABASE_URL`                 | required | required | not set  | Full SQLAlchemy connection string (`mysql+asyncmy://user:pass@host:3306/dbname`). Takes precedence over the `DB_*` trio below. |
-| `DB_MASTER_SECRET`             | not set  | not set  | required | DB credentials as JSON, e.g. `{"username":"admin","password":"hunter2"}`. Read only when `DATABASE_URL` is unset. |
-| `DB_ENDPOINT`                  | not set  | not set  | required | Database hostname, e.g. `journal-api-db.58138ad.us-east-1.rds.amazonaws.com`. Read only when `DATABASE_URL` is unset. |
-| `DB_NAME`                      | not set  | not set  | required | Database name, e.g. `journal`. Read only when `DATABASE_URL` is unset. |
-| `DEFAULT_USER`                 | required | required | required | Username of the default user. Read by the `api.init_db` seed step only, not by the running API. |
-| `DEFAULT_USER_PASSWORD`        | required | required | required | Password for the default user. Seed step only. |
-| `SQS_ENDPOINT_URL`             | required | required | not set  | Points boto3 at the local ElasticMQ container. Leave unset in AWS so boto3 resolves the real SQS endpoint. |
-| `AWS_REGION`                   | optional | optional | required | Defaults to `us-east-1` when unset. |
-| `AWS_ACCESS_KEY_ID`            | required | required | not set  | Any non-empty placeholder. ElasticMQ ignores the value, but boto3 will not sign a request without credentials present. In AWS the task role supplies them. |
-| `AWS_SECRET_ACCESS_KEY`        | required | required | not set  | Same as `AWS_ACCESS_KEY_ID`. |
+## Deploying
 
-`validate_env()` in `services/api/main.py` enforces `JWT_SECRET_KEY`, `REDIS_URL`, `EMAIL_VERIFICATION_QUEUE_URL`, and the database variables at startup. `services/api/init_db.py` additionally enforces the `DEFAULT_USER` pair.
+The API and worker images are built and pushed to Docker Hub on every push to `main` that touches their service directory. `.github/workflows/api-image-build.yml` runs unit and integration tests first. `.github/workflows/worker-image-build.yml` only builds and pushes.
 
-### Worker (`services/worker/`)
+Infrastructure is applied by running `.github/workflows/terraform-deploy.yml` manually with an `environment` input, which selects `infra/terraform/variables/<environment>.tfvars` and `.tfbackend`.
 
-Not exercised in CI: `.github/workflows/worker-image-build.yml` only builds and pushes the image.
+Terraform installs ArgoCD and the `root-app` Application. From then on ArgoCD keeps the cluster in sync with `infra/helm/` on `main`.
 
-| Variable                       | Local    | CI      | AWS      | Description |
-| ------------------------------ | -------- | ------- | -------- | ----------- |
-| `EMAIL_VERIFICATION_QUEUE_URL` | required | not set | required | SQS queue the worker polls for email-verification jobs. |
-| `VERIFY_API_URL`               | required | not set | required | Base URL the worker builds verification links against. |
-| `SQS_ENDPOINT_URL`             | required | not set | not set  | Points boto3 at the local ElasticMQ container. Leave unset in AWS. |
-| `AWS_REGION`                   | optional | not set | required | Defaults to `us-east-1` when unset. |
-| `AWS_ACCESS_KEY_ID`            | required | not set | not set  | Any non-empty placeholder, as above. In AWS the task role supplies them. |
-| `AWS_SECRET_ACCESS_KEY`        | required | not set | not set  | Same as `AWS_ACCESS_KEY_ID`. |
+## Environment variables
 
-The worker enforces `EMAIL_VERIFICATION_QUEUE_URL` and `VERIFY_API_URL` on startup.
+There are three environments. Local means `docker compose` plus host-side `pytest` and `alembic`, all reading the `.env` file at the repo root. CI means the `integration-test` job in `.github/workflows/api-image-build.yml`, which sets values in its `env:` block from GitHub Actions secrets. AWS means the pods in EKS, which get their values from the `journal-app-config` ConfigMap and the `journal-app-secrets` Secret.
 
-#### Local-only variables
+In AWS the ConfigMap is built from the annotations on the ArgoCD cluster secret in `infra/terraform/argocd.tf`. The Secret is synced from Secrets Manager by `infra/helm/journal-app/templates/externalsecret.yaml`. AWS credentials come from EKS pod identity on the `api` and `worker` service accounts.
 
-These let host-side tooling reach the compose containers over `localhost` while the containers themselves talk over the compose network. Do not set them in CI or AWS — CI passes its localhost database URL as a plain `DATABASE_URL` override on the migrate, seed, and test steps instead.
+### API
 
-| Variable              | Description |
-| --------------------- | ----------- |
-| `DATABASE_URL_LOCAL`  | Same as `DATABASE_URL` but pointed at `localhost`. Preferred over `DATABASE_URL` by `services/api/alembic/env.py` and by the integration-test fixtures. |
-| `REDIS_URL_LOCAL`     | Same as `REDIS_URL` but pointed at `localhost`. Preferred over `REDIS_URL` by the integration-test fixtures. |
-| `MYSQL_ROOT_PASSWORD` | Root password for the MySQL container, read by the official `mysql` image's init script. Also set in CI for the compose stack. |
-| `MYSQL_DATABASE`      | Database created by the MySQL container on first boot. Also set in CI for the compose stack. |
+These apply to the API, the `python -m api.init_db` seed step and `alembic upgrade head`. `validate_env()` in `services/api/main.py` checks the required ones at startup, and `services/api/init_db.py` also checks the default user pair.
+
+`JWT_SECRET_KEY` signs and verifies access, refresh and email-verification tokens. Required everywhere. In AWS it comes from Secrets Manager.
+
+`REDIS_URL` is the Redis connection string used by the rate limiter. Required everywhere.
+
+`EMAIL_VERIFICATION_QUEUE_URL` is the SQS queue the API sends email-verification jobs to. Required everywhere.
+
+`DATABASE_URL` is a full SQLAlchemy connection string such as `mysql+asyncmy://user:pass@host:3306/dbname`. Used locally and in CI. Leave it unset in AWS so the API builds its connection from the variables below instead.
+
+`DB_MASTER_SECRET`, `DB_ENDPOINT` and `DB_NAME` are only read when `DATABASE_URL` is unset, which is only in AWS. `DB_MASTER_SECRET` is the Aurora master secret as JSON, for example `{"username":"admin","password":"hunter2"}`, synced from Secrets Manager. `DB_ENDPOINT` and `DB_NAME` come from the ConfigMap.
+
+`DB_CA_BUNDLE` is the CA file used for TLS to Aurora, read only when `DATABASE_URL` is unset. `services/api/Dockerfile` sets it to the RDS global bundle baked into the image, so you never set it yourself.
+
+`DEFAULT_USER` and `DEFAULT_USER_PASSWORD` are the default user created by the seed step. The integration tests also log in as this user. Required locally and in CI. Not used in AWS.
+
+`SQS_ENDPOINT_URL` points boto3 at ElasticMQ. Required locally and in CI. Leave it unset in AWS so boto3 uses the real SQS endpoint.
+
+`AWS_REGION` defaults to `us-east-1`. In AWS it comes from the ConfigMap.
+
+`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` can be any non-empty placeholder locally and in CI. ElasticMQ ignores them, but boto3 won't sign a request without credentials. Leave them unset in AWS.
+
+### Worker
+
+The worker isn't run in CI. `services/worker/worker.py` checks `EMAIL_VERIFICATION_QUEUE_URL` and `VERIFY_API_URL` at startup.
+
+`EMAIL_VERIFICATION_QUEUE_URL` is the queue the worker polls. Required locally and in AWS.
+
+`VERIFY_API_URL` is the base URL the worker builds verification links against. Required locally and in AWS. In AWS the ConfigMap sets it to `https://<ingress host>/verify-email`.
+
+`SQS_ENDPOINT_URL`, `AWS_REGION`, `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` work the same as for the API.
+
+### Local only
+
+These let host-side tools reach the compose containers on `localhost` while the containers talk to each other over the compose network. Don't set them in AWS.
+
+`DATABASE_URL_LOCAL` is `DATABASE_URL` pointed at `localhost`. `services/api/alembic/env.py` and the integration test fixtures prefer it over `DATABASE_URL`. CI doesn't set it under this name. Instead it passes its localhost URL as `DATABASE_URL` on the migrate, seed and test steps.
+
+`REDIS_URL_LOCAL` is `REDIS_URL` pointed at `localhost`. The integration test fixtures prefer it over `REDIS_URL`.
+
+`MYSQL_ROOT_PASSWORD` and `MYSQL_DATABASE` are read by the MySQL container on first boot to set the root password and create the database. CI sets these too for its compose stack.

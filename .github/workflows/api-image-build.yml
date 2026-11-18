@@ -5,7 +5,7 @@ on:
     - main
     paths:
     - 'services/api/**'
-    - 'docker-compose.ci.yaml'
+    - 'compose.yaml'
     - '.github/workflows/api-image-build.yml'
 jobs:
   unit-test:
@@ -47,7 +47,7 @@ jobs:
     - name: Install app dependancies
       run: pip install -r services/api/requirements.txt
     - name: Run docker compose
-      run: docker compose -f docker-compose.ci.yaml up -d --wait mysql elasticmq redis
+      run: docker compose up -d --wait mysql elasticmq redis
     - name: Run database migrations
       run: alembic -c services/api/alembic.ini upgrade head
       env:
